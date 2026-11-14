@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChainGate — College Access Control</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040608;--surface:#080d14;--card:#0c1520;
+  --border:#152030;--gold:#f59e0b;--cyan:#06b6d4;
+  --green:#10b981;--purple:#8b5cf6;--text:#c4d8e8;--muted:#4a6278;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+body::before{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 900px 600px at 50% 0%,rgba(6,182,212,0.06),transparent 60%);
+  pointer-events:none;}
+.logo{font-size:2.8rem;font-weight:800;letter-spacing:-1px;margin-bottom:8px;}
+.logo span{color:var(--cyan);}
+.tagline{color:var(--muted);font-size:1rem;margin-bottom:48px;font-family:var(--mono);}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;width:100%;max-width:640px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;
+  padding:28px;text-decoration:none;transition:all 0.2s;position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity 0.2s;
+  background:radial-gradient(ellipse 200px 150px at 50% 0%,var(--glow),transparent);}
+.card:hover{transform:translateY(-3px);border-color:var(--accent);}
+.card:hover::before{opacity:1;}
+.card[data-role="admin"]{--glow:rgba(139,92,246,0.12);--accent:rgba(139,92,246,0.4);}
+.card[data-role="gate"]{--glow:rgba(6,182,212,0.12);--accent:rgba(6,182,212,0.4);}
+.card[data-role="mobile"]{--glow:rgba(16,185,129,0.12);--accent:rgba(16,185,129,0.4);}
+.card[data-role="chain"]{--glow:rgba(245,158,11,0.12);--accent:rgba(245,158,11,0.4);}
+.card-icon{font-size:2rem;margin-bottom:14px;}
+.card-title{font-size:1.1rem;font-weight:700;margin-bottom:6px;}
+.card[data-role="admin"] .card-title{color:#a78bfa;}
+.card[data-role="gate"] .card-title{color:var(--cyan);}
+.card[data-role="mobile"] .card-title{color:var(--green);}
+.card[data-role="chain"] .card-title{color:var(--gold);}
+.card-desc{font-size:0.82rem;color:var(--muted);line-height:1.5;}
+.card-badge{position:absolute;top:14px;right:14px;font-size:0.65rem;font-family:var(--mono);
+  padding:3px 8px;border-radius:4px;font-weight:700;}
+.card[data-role="admin"] .card-badge{background:rgba(139,92,246,0.15);color:#a78bfa;border:1px solid rgba(139,92,246,0.2);}
+.card[data-role="gate"] .card-badge{background:rgba(6,182,212,0.15);color:var(--cyan);border:1px solid rgba(6,182,212,0.2);}
+.card[data-role="mobile"] .card-badge{background:rgba(16,185,129,0.15);color:var(--green);border:1px solid rgba(16,185,129,0.2);}
+.card[data-role="chain"] .card-badge{background:rgba(245,158,11,0.15);color:var(--gold);border:1px solid rgba(245,158,11,0.2);}
+.status{margin-top:32px;display:flex;align-items:center;gap:8px;font-size:0.8rem;font-family:var(--mono);color:var(--muted);}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--muted);}
+.dot.online{background:var(--green);box-shadow:0 0 6px var(--green);}
+</style>
+</head>
+<body>
+<div class="logo">Chain<span>Gate</span></div>
+<div class="tagline">// blockchain-backed college access control</div>
+
+<div class="grid">
+  <a class="card" href="admin.html" data-role="admin">
+    <span class="card-badge">ADMIN</span>
+    <div class="card-icon">🛡️</div>
+    <div class="card-title">Admin Panel</div>
+    <div class="card-desc">Register students, manage access, issue emergency passes, view dashboard</div>
+  </a>
+  <a class="card" href="gate.html" data-role="gate">
+    <span class="card-badge">GATE</span>
+    <div class="card-icon">🚪</div>
+    <div class="card-title">Gate Station</div>
+    <div class="card-desc">Scan QR codes, run face verification, open/close gate in real time</div>
+  </a>
+  <a class="card" href="mobile.html" data-role="mobile">
+    <span class="card-badge">STUDENT</span>
+    <div class="card-icon">📱</div>
+    <div class="card-title">Mobile App</div>
+    <div class="card-desc">Student login, generate entry/exit QR codes, view access status</div>
+  </a>
+  <a class="card" href="chain.html" data-role="chain">
+    <span class="card-badge">LEDGER</span>
+    <div class="card-icon">⛓️</div>
+    <div class="card-title">Blockchain</div>
+    <div class="card-desc">Immutable audit trail of every gate event, block explorer, chain validation</div>
+  </a>
+</div>
+
+
+<div class="status">
+  <div class="dot" id="status-dot"></div>
+  <span id="status-text">Checking server...</span>
+</div>
+
+<script>
+(async()=>{
+  try{
+    const r=await fetch('/health',{signal:AbortSignal.timeout(3000)});
+    const d=await r.json();
+    document.getElementById('status-dot').className='dot online';
+    document.getElementById('status-text').textContent=`server online · uptime ${d.uptime}s`;
+  }catch(e){
+    document.getElementById('status-text').textContent='server offline — run: npm start';
+  }
+})();
+</script>
+</body>
+</html>

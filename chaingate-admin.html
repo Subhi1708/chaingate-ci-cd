@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChainGate — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f8fafc;--surface:#ffffff;--card:#ffffff;
+  --border:#e2e8f0;--border2:#cbd5e0;
+  --primary:#7c3aed;--primary-dark:#6d28d9;--primary-light:#f5f3ff;
+  --success:#059669;--success-light:#ecfdf5;
+  --danger:#dc2626;--danger-light:#fef2f2;
+  --warn:#d97706;--warn-light:#fffbeb;
+  --info:#0284c7;--info-light:#f0f9ff;
+  --text:#111827;--muted:#6b7280;--subtle:#9ca3af;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:var(--font);color:var(--text);}
+
+/* SIDEBAR */
+.sidebar{
+  position:fixed;top:0;left:0;bottom:0;width:220px;
+  background:var(--primary);
+  display:flex;flex-direction:column;
+  z-index:50;
+}
+.sb-logo{
+  padding:20px 20px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.1);
+}
+.sb-logo-name{font-size:1.1rem;font-weight:800;color:#fff;letter-spacing:-0.3px;}
+.sb-logo-sub{font-size:0.72rem;color:rgba(255,255,255,0.55);margin-top:2px;}
+.sb-nav{flex:1;padding:12px 10px;overflow-y:auto;}
+.sb-section{font-size:0.65rem;font-weight:700;color:rgba(255,255,255,0.4);
+  text-transform:uppercase;letter-spacing:1.5px;padding:8px 10px 4px;}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:8px;
+  cursor:pointer;transition:all 0.15s;
+  font-size:0.88rem;font-weight:500;color:rgba(255,255,255,0.7);
+  margin-bottom:2px;text-decoration:none;
+}
+.sb-item:hover{background:rgba(255,255,255,0.08);color:#fff;}
+.sb-item.active{background:rgba(255,255,255,0.15);color:#fff;font-weight:600;}
+.sb-item .icon{font-size:1rem;flex-shrink:0;}
+.sb-footer{
+  padding:14px;border-top:1px solid rgba(255,255,255,0.1);
+}
+.sb-user{
+  display:flex;align-items:center;gap:8px;
+}
+.sb-avatar{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;
+}
+.sb-uname{font-size:0.82rem;font-weight:600;color:#fff;}
+.sb-role{font-size:0.68rem;color:rgba(255,255,255,0.5);}
+
+/* MAIN */
+.main{margin-left:220px;min-height:100vh;}
+
+/* TOP */
+.toprow{
+  background:#fff;border-bottom:1px solid var(--border);
+  padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.page-title{font-size:1.1rem;font-weight:700;}
+.page-sub{font-size:0.8rem;color:var(--muted);margin-top:1px;}
+.toprow-right{display:flex;align-items:center;gap:12px;}
+.server-row{
+  display:flex;align-items:center;gap:8px;
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:6px 12px;
+}
+.server-row input{
+  border:none;outline:none;background:transparent;
+  font-family:var(--mono);font-size:0.75rem;color:var(--text);width:180px;
+}
+#sdot{width:7px;height:7px;border-radius:50%;background:#d1d5db;}
+#sdot.on{background:#22c55e;}
+#sdot.off{background:#ef4444;}
+
+/* CONTENT */
+.content{padding:24px 28px;}
+
+/* LOGIN GATE */
+#admin-login-gate{
+  max-width:420px;margin:60px auto;
+}
+
+/* TABS */
+.tabs{display:flex;gap:4px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:4px;margin-bottom:24px;}
+.tab{
+  flex:1;padding:8px;border-radius:7px;text-align:center;
+  cursor:pointer;font-size:0.85rem;font-weight:600;color:var(--muted);
+  transition:all 0.2s;
+}
+.tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,0.08);}
+
+/* CARDS */
+.card{
+  background:#fff;border:1px solid var(--border);
+  border-radius:12px;padding:20px;margin-bottom:16px;
+}
+.card-title{
+  font-size:0.95rem;font-weight:700;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+.card-desc{font-size:0.82rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.stat-card{
+  background:#fff;border:1px solid var(--border);
+  border-radius:12px;padding:16px;
+}
+.stat-val{font-size:1.8rem;font-weight:800;font-family:var(--mono);margin-bottom:4px;}
+.stat-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;}
+.stat-change{font-size:0.72rem;margin-top:4px;}
+.stat-green .stat-val{color:var(--success);}
+.stat-red .stat-val{color:var(--danger);}
+.stat-purple .stat-val{color:var(--primary);}
+.stat-blue .stat-val{color:var(--info);}
+
+/* GRID */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* FORM */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-size:0.75rem;font-weight:600;
+  color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;
+}
+.field input,.field select,.field textarea{
+  width:100%;padding:10px 13px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:8px;color:var(--text);
+  font-family:var(--font);font-size:0.88rem;
+  outline:none;transition:border-color 0.2s;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);}
+.field textarea{resize:vertical;min-height:80px;}
+
+/* PHOTO UPLOAD */
+.photo-upload{
+  border:2px dashed var(--border2);border-radius:10px;
+  padding:16px;text-align:center;cursor:pointer;
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+.photo-upload:hover{border-color:var(--primary);background:var(--primary-light);}
+.photo-upload input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.preview-img{
+  width:60px;height:60px;border-radius:8px;
+  object-fit:cover;border:2px solid var(--success);
+  margin:0 auto 6px;display:block;
+}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 18px;border-radius:8px;border:none;cursor:pointer;
+  font-family:var(--font);font-weight:700;font-size:0.88rem;
+  transition:all 0.2s;
+}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 2px 8px rgba(124,58,237,0.3);}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);}
+.btn-success{background:var(--success);color:#fff;}
+.btn-success:hover{opacity:0.9;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-danger:hover{opacity:0.85;}
+.btn-warn{background:var(--warn);color:#fff;}
+.btn-outline{background:none;color:var(--text);border:1.5px solid var(--border2);}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);}
+.btn-w{width:100%;}
+.btn-sm{padding:6px 12px;font-size:0.8rem;border-radius:6px;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;}
+
+/* ALERTS */
+.alrt{padding:10px 14px;border-radius:8px;font-size:0.83rem;margin-bottom:10px;border:1px solid;}
+.alrt-ok{background:var(--success-light);border-color:rgba(5,150,105,0.2);color:var(--success);}
+.alrt-err{background:var(--danger-light);border-color:rgba(220,38,38,0.2);color:var(--danger);}
+.alrt-warn{background:var(--warn-light);border-color:rgba(217,119,6,0.2);color:var(--warn);}
+.alrt-info{background:var(--info-light);border-color:rgba(2,132,199,0.15);color:var(--info);}
+
+/* TABLE */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{
+  padding:10px 14px;background:var(--bg);
+  font-size:0.72rem;font-weight:700;color:var(--muted);
+  text-transform:uppercase;letter-spacing:0.5px;
+  border-bottom:1px solid var(--border);text-align:left;
+}
+.tbl td{
+  padding:11px 14px;font-size:0.85rem;
+  border-bottom:1px solid var(--border);vertical-align:middle;
+}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--bg);}
+
+/* BADGE / CHIP */
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:5px;
+  font-size:0.7rem;font-weight:700;font-family:var(--mono);
+  text-transform:uppercase;
+}
+.chip-g{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;}
+.chip-r{background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;}
+.chip-b{background:#dbeafe;color:#1d4ed8;border:1px solid #bfdbfe;}
+.chip-y{background:#fef9c3;color:#a16207;border:1px solid #fde68a;}
+.chip-p{background:#ede9fe;color:#6d28d9;border:1px solid #ddd6fe;}
+
+/* STUDENT CARD */
+.student-card{
+  border:1px solid var(--border);border-radius:10px;padding:14px;
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:10px;transition:all 0.2s;
+}
+.student-card:hover{border-color:var(--primary);background:var(--primary-light);}
+.s-avatar{
+  width:44px;height:44px;border-radius:8px;
+  background:var(--bg);border:1px solid var(--border);
+  object-fit:cover;flex-shrink:0;
+}
+.s-name{font-size:0.9rem;font-weight:700;}
+.s-meta{font-size:0.72rem;color:var(--muted);font-family:var(--mono);margin-top:2px;}
+.s-actions{margin-left:auto;display:flex;gap:6px;}
+
+/* PASS ITEM */
+.pass-item{
+  background:var(--warn-light);border:1px solid rgba(217,119,6,0.2);
+  border-radius:10px;padding:12px 14px;margin-bottom:8px;
+}
+.pass-token{
+  font-family:var(--mono);font-size:0.78rem;color:var(--warn);
+  background:rgba(217,119,6,0.1);padding:4px 8px;border-radius:4px;
+  margin-top:6px;word-break:break-all;display:block;
+}
+
+/* OVERFLOW */
+.overflow-y{max-height:380px;overflow-y:auto;}
+
+.hidden{display:none!important;}
+.mt1{margin-top:8px;}
+.mt2{margin-top:16px;}
+.flex{display:flex;align-items:center;gap:8px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-name">🔐 ChainGate</div>
+    <div class="sb-logo-sub">Admin Control Center</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Dashboard</div>
+    <a class="sb-item active" onclick="showTab('dashboard')" href="#"><span class="icon">📊</span> Dashboard</a>
+    <div class="sb-section">Management</div>
+    <a class="sb-item" onclick="showTab('students')" href="#"><span class="icon">🎓</span> Students</a>
+    <a class="sb-item" onclick="showTab('register')" href="#"><span class="icon">➕</span> Register Student</a>
+    <a class="sb-item" onclick="showTab('passes')" href="#"><span class="icon">🚨</span> Emergency Passes</a>
+    <div class="sb-section">Control</div>
+    <a class="sb-item" onclick="showTab('gate')" href="#"><span class="icon">🚪</span> Gate Override</a>
+    <a class="sb-item" onclick="showTab('log')" href="#"><span class="icon">📋</span> Access Log</a>
+    <div class="sb-section">Navigate</div>
+    <a class="sb-item" href="chaingate-mobile.html"><span class="icon">📱</span> Mobile App</a>
+    <a class="sb-item" href="chaingate-gate.html"><span class="icon">🚪</span> Gate Station</a>
+    <a class="sb-item" href="chaingate-chain.html"><span class="icon">⛓️</span> Blockchain</a>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar">👨‍💼</div>
+      <div>
+        <div class="sb-uname" id="admin-display-name">Admin</div>
+        <div class="sb-role">Security Officer</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+  <div class="toprow">
+    <div>
+      <div class="page-title" id="page-title">Dashboard</div>
+      <div class="page-sub" id="page-sub">College Gate Security System</div>
+    </div>
+    <div class="toprow-right">
+      <div class="server-row">
+        <div id="sdot"></div>
+        <span style="font-size:0.72rem;color:var(--muted);">Server:</span>
+        <input id="server-url" value="http://localhost:3000">
+        <button class="btn btn-outline btn-sm" onclick="pingServer()">Test</button>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="adminLogout()" id="logout-btn" style="display:none;">Logout</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ─── ADMIN LOGIN GATE ─── -->
+    <div id="admin-login-gate">
+      <div class="card" style="text-align:center;padding:36px;">
+        <div style="font-size:3rem;margin-bottom:12px;">🛡️</div>
+        <h2 style="font-size:1.3rem;margin-bottom:6px;">Admin Login</h2>
+        <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px;">College Gate Security Panel</p>
+        <div class="field" style="text-align:left;">
+          <label>Admin Password</label>
+          <input type="password" id="admin-pass" placeholder="Enter password" value="admin123">
+        </div>
+        <div id="login-err" class="hidden"></div>
+        <button class="btn btn-primary btn-w" onclick="adminLogin()">Login as Admin →</button>
+        <p style="font-size:0.72rem;color:var(--muted);margin-top:10px;">Demo password: admin123</p>
+      </div>
+    </div>
+
+    <!-- ─── ADMIN PANEL ─── -->
+    <div id="admin-panel" class="hidden">
+
+      <!-- DASHBOARD TAB -->
+      <div id="tab-dashboard" class="tab-content">
+        <div class="stats-row">
+          <div class="stat-card stat-green">
+            <div class="stat-val" id="d-entries">0</div>
+            <div class="stat-label">Today's Entries</div>
+            <div class="stat-change" style="color:var(--success);">↑ College access count</div>
+          </div>
+          <div class="stat-card stat-red">
+            <div class="stat-val" id="d-denied">0</div>
+            <div class="stat-label">Denied Attempts</div>
+            <div class="stat-change" style="color:var(--danger);">Unauthorized attempts</div>
+          </div>
+          <div class="stat-card stat-purple">
+            <div class="stat-val" id="d-students">0</div>
+            <div class="stat-label">Registered Students</div>
+            <div class="stat-change" style="color:var(--primary);">In blockchain</div>
+          </div>
+          <div class="stat-card stat-blue">
+            <div class="stat-val" id="d-active">0</div>
+            <div class="stat-label">Currently Inside</div>
+            <div class="stat-change" style="color:var(--info);">Live sessions</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <!-- Quick Actions -->
+          <div class="card">
+            <div class="card-title">⚡ Quick Actions</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <button class="btn btn-success btn-w" onclick="showTab('register')">➕ Register Student</button>
+              <button class="btn btn-warn btn-w" onclick="showTab('passes')">🚨 Emergency Pass</button>
+              <button class="btn btn-primary btn-w" onclick="showTab('gate')">🚪 Gate Override</button>
+              <button class="btn btn-outline btn-w" onclick="refreshDashboard()">🔄 Refresh</button>
+            </div>
+          </div>
+          <!-- System Status -->
+          <div class="card">
+            <div class="card-title">🔧 System Status</div>
+            <div class="flex-between" style="margin-bottom:8px;">
+              <span style="font-size:0.85rem;">Backend Server</span>
+              <span class="chip" id="sys-server">Checking...</span>
+            </div>
+            <div class="flex-between" style="margin-bottom:8px;">
+              <span style="font-size:0.85rem;">Blockchain</span>
+              <span class="chip chip-g">Active</span>
+            </div>
+            <div class="flex-between" style="margin-bottom:8px;">
+              <span style="font-size:0.85rem;">Face Verification</span>
+              <span class="chip chip-g">Enabled</span>
+            </div>
+            <div class="flex-between">
+              <span style="font-size:0.85rem;">Gate Status</span>
+              <span class="chip" id="sys-gate">CLOSED</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card">
+          <div class="flex-between card-title" style="margin-bottom:12px;">
+            <span>Recent Activity</span>
+            <button class="btn btn-outline btn-sm" onclick="loadRecentActivity()">🔄 Refresh</button>
+          </div>
+          <div id="recent-activity">
+            <div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No recent activity</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STUDENTS TAB -->
+      <div id="tab-students" class="tab-content hidden">
+        <div class="card">
+          <div class="flex-between card-title">
+            <span>Registered Students</span>
+            <div class="flex gap8">
+              <input id="student-search" class="field" style="margin:0;width:220px;padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;" placeholder="Search by name or roll...">
+              <button class="btn btn-primary btn-sm" onclick="showTab('register')">+ Register</button>
+            </div>
+          </div>
+          <div id="students-list" class="overflow-y">
+            <div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No students registered yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REGISTER TAB -->
+      <div id="tab-register" class="tab-content hidden">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">🎓 Register New Student</div>
+            <div class="card-desc">Register a student to grant them gate access. Their ID card photo will be used for face verification at the gate.</div>
+
+            <div class="field">
+              <label>Roll Number *</label>
+              <input id="reg-roll" placeholder="e.g. 21CS045">
+            </div>
+            <div class="field">
+              <label>Full Name *</label>
+              <input id="reg-name" placeholder="Student's full name">
+            </div>
+            <div class="field">
+              <label>Department *</label>
+              <input id="reg-dept" placeholder="e.g. Computer Science">
+            </div>
+            <div class="field">
+              <label>Year</label>
+              <select id="reg-year">
+                <option>1st Year</option><option>2nd Year</option>
+                <option>3rd Year</option><option>4th Year</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Phone</label>
+              <input id="reg-phone" placeholder="10-digit phone number" type="tel">
+            </div>
+
+            <div class="field">
+              <label>ID Card Photo (for gate face verification)</label>
+              <div class="photo-upload" id="reg-photo-zone">
+                <input type="file" accept="image/*" id="reg-photo-input" onchange="handleRegPhoto(event)">
+                <div id="reg-ph-placeholder">
+                  <div style="font-size:1.8rem;margin-bottom:6px;">🪪</div>
+                  <div style="font-size:0.82rem;color:var(--muted);">Upload student ID card photo</div>
+                  <div style="font-size:0.72rem;color:var(--subtle);margin-top:2px;">Will be used for face verification</div>
+                </div>
+                <div id="reg-ph-preview" class="hidden" style="text-align:center;">
+                  <img id="reg-photo-img" class="preview-img" src="" alt="ID">
+                  <div style="font-size:0.78rem;color:var(--success);font-weight:600;">✓ Photo uploaded</div>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn btn-primary btn-w" onclick="registerStudent()">Register Student →</button>
+            <div id="reg-result" class="mt1"></div>
+          </div>
+
+          <!-- Recently Registered -->
+          <div class="card">
+            <div class="card-title">✅ Recently Registered</div>
+            <div id="recent-regs" class="overflow-y">
+              <div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No recent registrations</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- EMERGENCY PASSES TAB -->
+      <div id="tab-passes" class="tab-content hidden">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">🚨 Issue Emergency Pass</div>
+            <div class="card-desc">Issue a temporary pass when a student's QR expires or face verification fails. The pass is valid for 5 minutes and can only be used once.</div>
+
+            <div class="field">
+              <label>Student Roll Number</label>
+              <input id="ep-roll" placeholder="e.g. 21CS045">
+            </div>
+            <div class="field">
+              <label>Student Name</label>
+              <input id="ep-name" placeholder="Student name">
+            </div>
+            <div class="field">
+              <label>Reason for Emergency Pass</label>
+              <select id="ep-reason">
+                <option>QR Code expired</option>
+                <option>Face verification failed</option>
+                <option>Phone battery dead</option>
+                <option>System error</option>
+                <option>Lost ID card</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Notes (optional)</label>
+              <textarea id="ep-notes" placeholder="Additional notes..."></textarea>
+            </div>
+            <button class="btn btn-warn btn-w" onclick="issueEmergencyPass()">🚨 Issue Emergency Pass</button>
+            <div id="ep-result" class="mt1"></div>
+          </div>
+
+          <!-- Active Emergency Passes -->
+          <div class="card">
+            <div class="card-title">📋 Active Emergency Passes</div>
+            <div id="ep-list" class="overflow-y">
+              <div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No active passes</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GATE OVERRIDE TAB -->
+      <div id="tab-gate" class="tab-content hidden">
+        <div class="grid2">
+          <div class="card">
+            <div class="card-title">🚪 Gate Override Controls</div>
+            <div class="card-desc">Manually control the gate in emergency situations. All override actions are logged to the blockchain.</div>
+
+            <div style="background:var(--bg);border-radius:10px;padding:16px;margin-bottom:16px;">
+              <div style="font-size:0.8rem;color:var(--muted);margin-bottom:8px;">Current Gate Status</div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:12px;height:12px;border-radius:50%;background:#d1d5db;" id="gate-status-dot"></div>
+                <span style="font-size:1rem;font-weight:700;" id="gate-status-text">CLOSED</span>
+              </div>
+            </div>
+
+            <div style="display:grid;gap:10px;">
+              <button class="btn btn-success btn-w" onclick="adminGateOpen()">
+                🟢 Force Open Gate
+              </button>
+              <button class="btn btn-danger btn-w" onclick="adminGateClose()">
+                🔴 Force Close Gate
+              </button>
+            </div>
+
+            <div class="field mt2">
+              <label>Override Reason (logged)</label>
+              <input id="override-reason" placeholder="Reason for override...">
+            </div>
+            <div id="override-result" class="mt1"></div>
+          </div>
+
+          <!-- Active Sessions -->
+          <div class="card">
+            <div class="card-title">👥 Active Sessions</div>
+            <div id="active-sessions" class="overflow-y">
+              <div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No active sessions</div>
+            </div>
+            <button class="btn btn-outline btn-w mt1" onclick="refreshSessions()">🔄 Refresh</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ACCESS LOG TAB -->
+      <div id="tab-log" class="tab-content hidden">
+        <div class="card">
+          <div class="flex-between card-title">
+            <span>Access Log</span>
+            <div class="flex">
+              <button class="btn btn-outline btn-sm" onclick="loadAccessLog()">🔄 Refresh</button>
+              <button class="btn btn-outline btn-sm" onclick="clearAccessLog()">🗑️ Clear</button>
+            </div>
+          </div>
+          <div class="overflow-y" style="max-height:500px;">
+            <table class="tbl">
+              <thead>
+                <tr>
+                  <th>Time</th><th>Event</th><th>Student</th><th>Roll No</th><th>Result</th>
+                </tr>
+              </thead>
+              <tbody id="log-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No log entries</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end admin-panel -->
+  </div>
+</div>
+
+<script>
+const A={
+  loggedIn:false,
+  students:[],   // { rollNo, name, dept, year, phone, photoData, registeredAt }
+  passes:[],     // emergency passes
+  regPhoto:null,
+  gateOpen:false,
+  entries:0,denied:0,
+};
+
+function getURL(){return document.getElementById('server-url').value.trim();}
+
+async function pingServer(){
+  const dot=document.getElementById('sdot');
+  try{
+    await fetch(getURL()+'/health',{signal:AbortSignal.timeout(3000)});
+    dot.className='on';
+    document.getElementById('sys-server').textContent='Online';
+    document.getElementById('sys-server').className='chip chip-g';
+  }catch(e){
+    dot.className='off';
+    document.getElementById('sys-server').textContent='Offline';
+    document.getElementById('sys-server').className='chip chip-r';
+  }
+}
+
+async function adminLogin(){
+  const p=document.getElementById('admin-pass').value;
+  const url=getURL();
+  console.log('Attempting login to:', url);
+  try{
+    const res=await fetch(url+'/admin/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({password:p}),
+      signal:AbortSignal.timeout(5000)
+    });
+    console.log('Login response status:', res.status);
+    const d=await res.json();
+    console.log('Login response data:', d);
+    if(d.success){
+      A.loggedIn=true;
+      A.token=d.token;
+      localStorage.setItem('cg_admin_token',d.token);
+      document.getElementById('admin-login-gate').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+      document.getElementById('logout-btn').style.display='inline-flex';
+      pingServer();refreshDashboard();
+      loadStudentsFromBackend();
+      return;
+    }else{
+      document.getElementById('login-err').innerHTML='<div class="alrt alrt-err">❌ '+d.message+'</div>';
+      document.getElementById('login-err').classList.remove('hidden');
+    }
+  }catch(e){
+    console.log('Login error:', e);
+    // If server is not reachable, still allow local mode but warn user
+    if(p==='admin123'){
+      A.loggedIn=true;
+      A.token='offline-mode';
+      localStorage.setItem('cg_admin_token','offline-mode');
+      alert('⚠️ Server offline - working in local mode. Students will not sync to database.');
+      document.getElementById('admin-login-gate').classList.add('hidden');
+      document.getElementById('admin-panel').classList.remove('hidden');
+      document.getElementById('logout-btn').style.display='inline-flex';
+      document.getElementById('sys-server').textContent='Offline';
+      document.getElementById('sys-server').className='chip chip-r';
+      refreshDashboard();
+    }else{
+      document.getElementById('login-err').innerHTML='<div class="alrt alrt-err">❌ Wrong password</div>';
+      document.getElementById('login-err').classList.remove('hidden');
+    }
+  }
+}
+function adminLogout(){
+  A.loggedIn=false;
+  A.token=null;
+  localStorage.removeItem('cg_admin_token');
+  document.getElementById('admin-panel').classList.add('hidden');
+  document.getElementById('admin-login-gate').classList.remove('hidden');
+  document.getElementById('logout-btn').style.display='none';
+}
+
+async function loadStudentsFromBackend(){
+  try{
+    const res=await fetch(getURL()+'/admin/students',{
+      headers:{'Authorization':'Bearer '+(A.token||localStorage.getItem('cg_admin_token'))},
+      signal:AbortSignal.timeout(5000)
+    });
+    const d=await res.json();
+    if(d.success && d.students){
+      d.students.forEach(s=>{
+        if(!A.students.find(x=>x.rollNo===s.roll_no)){
+          A.students.push({
+            rollNo:s.roll_no,
+            name:s.name,
+            department:s.department,
+            year:s.year,
+            phone:s.phone,
+            photoData:s.photo_data
+          });
+        }
+      });
+      localStorage.setItem('cg_students',JSON.stringify(A.students));
+    }
+  }catch(e){console.log('Could not load from backend');}
+}
+
+/* ── TABS ── */
+function showTab(name){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.add('hidden'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.remove('hidden');
+
+  const titles={
+    dashboard:['Dashboard','College Gate Security Overview'],
+    students:['Students','Registered student database'],
+    register:['Register Student','Add new student to the system'],
+    passes:['Emergency Passes','Issue temporary access passes'],
+    gate:['Gate Override','Manual gate control'],
+    log:['Access Log','Complete access audit trail']
+  };
+  document.getElementById('page-title').textContent=titles[name]?.[0]||name;
+  document.getElementById('page-sub').textContent=titles[name]?.[1]||'';
+
+  if(name==='students'){renderStudents();renderRecentRegs();}
+  if(name==='log')loadAccessLog();
+  if(name==='passes')renderPasses();
+  if(name==='gate')refreshSessions();
+}
+
+/* ── DASHBOARD ── */
+function refreshDashboard(){
+  loadDashboardFromBackend();
+  loadRecentActivity();
+  // Try to sync local students to database when server comes online
+  if(A.loggedIn && A.token && A.token!=='offline-mode'){
+    syncLocalStudentsToDB();
+  }
+}
+
+async function loadDashboardFromBackend(){
+  try{
+    const res=await fetch(getURL()+'/admin/dashboard',{
+      headers:{'Authorization':'Bearer '+(A.token||localStorage.getItem('cg_admin_token'))},
+      signal:AbortSignal.timeout(5000)
+    });
+    const d=await res.json();
+    if(d.success){
+      A.entries=d.stats.todayEntries||0;
+      A.denied=d.stats.todayDenied||0;
+      document.getElementById('d-entries').textContent=A.entries;
+      document.getElementById('d-denied').textContent=A.denied;
+      document.getElementById('d-students').textContent=d.stats.totalStudents||0;
+      // Active sessions - keep local tracking
+      document.getElementById('d-active').textContent=A.gateOpen?1:0;
+    }
+  }catch(e){
+    // Fallback to local data
+    document.getElementById('d-entries').textContent=A.entries;
+    document.getElementById('d-denied').textContent=A.denied;
+    document.getElementById('d-students').textContent=A.students.length;
+    document.getElementById('d-active').textContent=A.gateOpen?1:0;
+  }
+}
+
+async function syncLocalStudentsToDB(){
+  const stored=JSON.parse(localStorage.getItem('cg_students')||'[]');
+  for(const s of stored){
+    try{
+      await fetch(getURL()+'/admin/register-student',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+(A.token||localStorage.getItem('cg_admin_token'))},
+        body:JSON.stringify({studentId:s.rollNo,name:s.name,department:s.department,year:s.year,phone:s.phone,photoData:s.photoData}),
+        signal:AbortSignal.timeout(3000)
+      });
+    }catch(e){}
+  }
+}
+
+function loadRecentActivity(){
+  const chain=JSON.parse(localStorage.getItem('cg_chain_log')||'[]');
+  const el=document.getElementById('recent-activity');
+  if(!chain.length){
+    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No recent activity</div>';
+    return;
+  }
+  const typeColor={ok:'chip-g',err:'chip-r',warn:'chip-y',info:'chip-b'};
+  el.innerHTML=chain.slice(0,15).map(e=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span class="chip ${typeColor[e.type?.toLowerCase()]||'chip-b'}" style="flex-shrink:0;">${e.type||'EVENT'}</span>
+      <span style="font-size:0.82rem;flex:1;">${e.msg}</span>
+      <span style="font-size:0.7rem;color:var(--muted);font-family:var(--mono);flex-shrink:0;">${fmt(e.ts)}</span>
+    </div>`).join('');
+}
+
+/* ── REGISTER STUDENT ── */
+function handleRegPhoto(e){
+  const file=e.target.files[0];if(!file)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    A.regPhoto=ev.target.result;
+    document.getElementById('reg-photo-img').src=A.regPhoto;
+    document.getElementById('reg-ph-placeholder').classList.add('hidden');
+    document.getElementById('reg-ph-preview').classList.remove('hidden');
+  };
+  r.readAsDataURL(file);
+}
+
+async function registerStudent(){
+  const roll=document.getElementById('reg-roll').value.trim();
+  const name=document.getElementById('reg-name').value.trim();
+  const dept=document.getElementById('reg-dept').value.trim();
+  const year=document.getElementById('reg-year').value;
+  const phone=document.getElementById('reg-phone').value.trim();
+
+  if(!roll||!name||!dept){showR('reg-result','⚠️ Fill in Roll No, Name, and Department','warn');return;}
+
+  const student={rollNo:roll,name,department:dept,year,phone,photoData:A.regPhoto,registeredAt:Date.now()};
+  A.students.push(student);
+
+  // Push to backend
+  try{
+    await fetch(getURL()+'/admin/register-student',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(A.token||localStorage.getItem('cg_admin_token'))},
+      body:JSON.stringify({studentId:roll,name,department:dept,year,phone,photoData:A.regPhoto}),
+      signal:AbortSignal.timeout(5000)
+    });
+  }catch(e){console.log('Backend offline — stored locally');}
+
+  // Save to localStorage for cross-page access
+  localStorage.setItem('cg_students',JSON.stringify(A.students));
+  // Save photo separately keyed by roll number so gate can look it up without mobile app
+  if(A.regPhoto){
+    localStorage.setItem('cg_refphoto_'+roll,A.regPhoto);
+  }
+
+  showR('reg-result',`✅ <strong>${name}</strong> registered successfully!`,'ok');
+  addChainLog('ok',`Student registered: ${name} (${roll})`);
+  A.entries=0;refreshDashboard();
+  renderRecentRegs();
+  clearRegForm();
+}
+
+function clearRegForm(){
+  ['reg-roll','reg-name','reg-dept','reg-phone'].forEach(id=>document.getElementById(id).value='');
+  A.regPhoto=null;
+  document.getElementById('reg-ph-placeholder').classList.remove('hidden');
+  document.getElementById('reg-ph-preview').classList.add('hidden');
+}
+
+function renderRecentRegs(){
+  const el = document.getElementById('recent-regs');
+
+  if(!A.students.length){
+    el.innerHTML = '<div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No registrations yet</div>';
+    return;
+  }
+
+  el.innerHTML = [...A.students].reverse().slice(0,8).map(s => {
+
+    // ✅ Priority 1: uploaded photo
+    let img = s.photoData;
+
+    // ✅ Priority 2: fallback from localStorage
+    if(!img){
+      img = localStorage.getItem('cg_refphoto_' + s.rollNo);
+    }
+
+    // ✅ Priority 3: default avatar (ADMIN STYLE)
+    if(!img){
+      img = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(s.name) + '&background=7c3aed&color=fff';
+    }
+
+    return `
+    <div class="student-card">
+      <img src="${img}" class="s-avatar" alt="photo">
+
+      <div>
+        <div class="s-name">${s.name}</div>
+        <div class="s-meta">${s.rollNo} · ${s.department} · ${s.year}</div>
+      </div>
+
+      <div style="margin-left:auto;">
+        <span class="chip chip-g">Registered</span>
+      </div>
+    </div>`;
+    
+  }).join('');
+}
+
+function renderStudents(){
+  const el=document.getElementById('students-list');
+  if(!A.students.length){
+    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No students registered yet</div>';
+    return;
+  }
+  el.innerHTML=A.students.map(s=>{
+    let img=s.photoData||localStorage.getItem('cg_refphoto_'+s.rollNo)||'';
+    return `<div class="student-card">
+      ${img?`<img src="${img}" class="s-avatar" alt="photo">`:
+        `<div class="s-avatar" style="display:flex;align-items:center;justify-content:center;font-size:18px;">👤</div>`}
+      <div><div class="s-name">${s.name}</div><div class="s-meta">${s.rollNo} · ${s.department} · ${s.year}</div></div>
+      <div style="margin-left:auto;"><button class="btn btn-sm btn-danger" onclick="removeStudent('${s.rollNo}')">✕</button></div>
+    </div>`;
+  }).join('');
+}
+
+function removeStudent(rollNo){
+  if(!confirm('Are you sure you want to delete this student? This will also remove them from the database.'))return;
+  
+  // Try to delete from backend
+  fetch(getURL()+'/admin/delete-student',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+(A.token||localStorage.getItem('cg_admin_token'))},
+    body:JSON.stringify({studentId:rollNo})
+  }).catch(()=>{});
+  
+  // Remove from local
+  A.students=A.students.filter(s=>s.rollNo!==rollNo);
+  localStorage.setItem('cg_students',JSON.stringify(A.students));
+  localStorage.removeItem('cg_refphoto_'+rollNo);
+  renderStudents();addChainLog('warn',`Student removed: ${rollNo}`);
+}
+
+/* ── EMERGENCY PASSES ── */
+function issueEmergencyPass(){
+  const roll=document.getElementById('ep-roll').value.trim();
+  const name=document.getElementById('ep-name').value.trim()||roll;
+  const reason=document.getElementById('ep-reason').value;
+  const notes=document.getElementById('ep-notes').value.trim();
+  if(!roll){showR('ep-result','⚠️ Enter student roll number','warn');return;}
+
+  const pass={
+    rollNo:roll,name,reason,notes,
+    token:genToken(20),
+    expiry:Date.now()+300000, // 5 min
+    issuedAt:Date.now(),used:false,type:'entry'
+  };
+  A.passes.push(pass);
+  localStorage.setItem('cg_passes',JSON.stringify(A.passes));
+  addChainLog('warn',`Emergency pass issued: ${name} (${roll}) — ${reason}`);
+
+  showR('ep-result',
+    `✅ Emergency pass issued for <strong>${name}</strong><br>
+     <span class="pass-token">${pass.token}</span>
+     <small style="color:var(--muted);font-size:0.72rem;">Valid for 5 minutes · Single use</small>`,
+    'ok');
+  document.getElementById('ep-roll').value='';
+  document.getElementById('ep-name').value='';
+  document.getElementById('ep-notes').value='';
+  renderPasses();
+}
+
+function renderPasses(){
+  const el=document.getElementById('ep-list');
+  const active=A.passes.filter(p=>!p.used&&p.expiry>Date.now());
+  if(!active.length){
+    el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No active passes</div>';
+    return;
+  }
+  el.innerHTML=active.map(p=>`
+    <div class="pass-item">
+      <div class="flex-between">
+        <strong>${p.name} (${p.rollNo})</strong>
+        <span class="chip chip-y">Active</span>
+      </div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:4px;">
+        Reason: ${p.reason} · Expires: ${fmt(p.expiry)}
+      </div>
+      <span class="pass-token">${p.token}</span>
+    </div>`).join('');
+}
+
+/* ── GATE OVERRIDE ── */
+function adminGateOpen(){
+  const reason=document.getElementById('override-reason').value.trim()||'Admin override';
+  A.gateOpen=true;
+  document.getElementById('gate-status-dot').style.background='#22c55e';
+  document.getElementById('gate-status-text').textContent='OPEN';
+  document.getElementById('sys-gate').textContent='OPEN';
+  document.getElementById('sys-gate').className='chip chip-g';
+  showR('override-result','✅ Gate opened by admin','ok');
+  addChainLog('warn',`Admin gate override OPEN — ${reason}`);
+}
+function adminGateClose(){
+  const reason=document.getElementById('override-reason').value.trim()||'Admin override';
+  A.gateOpen=false;
+  document.getElementById('gate-status-dot').style.background='#d1d5db';
+  document.getElementById('gate-status-text').textContent='CLOSED';
+  document.getElementById('sys-gate').textContent='CLOSED';
+  document.getElementById('sys-gate').className='chip chip-r';
+  showR('override-result','✅ Gate closed by admin','ok');
+  addChainLog('warn',`Admin gate override CLOSE — ${reason}`);
+}
+
+function refreshSessions(){
+  const el=document.getElementById('active-sessions');
+  el.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem;font-size:0.85rem;">No active sessions</div>';
+}
+
+/* ── ACCESS LOG ── */
+function loadAccessLog(){
+  const chain=JSON.parse(localStorage.getItem('cg_chain_log')||'[]');
+  const tbody=document.getElementById('log-tbody');
+  if(!chain.length){
+    tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem;">No log entries</td></tr>';
+    return;
+  }
+  const tc={ok:'chip-g',err:'chip-r',warn:'chip-y',info:'chip-b'};
+  tbody.innerHTML=chain.map(e=>{
+    const parts=e.msg?.match(/([A-Z][^(]+)\(([^)]+)\)/)||[];
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:0.75rem;">${fmt(e.ts)}</td>
+      <td>${e.msg?.split('—')[0]||e.msg||''}</td>
+      <td>${parts[1]||'—'}</td>
+      <td style="font-family:var(--mono);">${parts[2]||'—'}</td>
+      <td><span class="chip ${tc[e.type?.toLowerCase()]||'chip-b'}">${e.type||'EVENT'}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function clearAccessLog(){
+  localStorage.removeItem('cg_chain_log');
+  loadAccessLog();
+}
+
+/* ── HELPERS ── */
+function showR(id,html,type){
+  const el=document.getElementById(id);if(!el)return;
+  const m={ok:'alrt-ok',err:'alrt-err',warn:'alrt-warn',info:'alrt-info'};
+  el.innerHTML=`<div class="alrt ${m[type]||''}">${html}</div>`;
+}
+function addChainLog(type,msg){
+  const chain=JSON.parse(localStorage.getItem('cg_chain_log')||'[]');
+  chain.unshift({type:type.toUpperCase(),msg,ts:Date.now()});
+  if(chain.length>200)chain.pop();
+  localStorage.setItem('cg_chain_log',JSON.stringify(chain));
+}
+function genToken(n=20){return Array.from({length:n},()=>'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'[Math.floor(Math.random()*36)]).join('');}
+function fmt(ts){return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+
+// Load students from localStorage
+function init(){
+  const stored=JSON.parse(localStorage.getItem('cg_students')||'[]');
+  A.students=stored;
+}
+init();
+pingServer();
+</script>
+</body>
+</html>

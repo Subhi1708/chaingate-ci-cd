@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ChainGate — Student Mobile</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4f8;--surface:#ffffff;--card:#ffffff;
+  --border:#e2e8f0;--border2:#cbd5e0;
+  --primary:#1a56db;--primary-dark:#1344b0;--primary-light:#ebf0ff;
+  --success:#0f9b58;--success-light:#e6f9f0;
+  --danger:#e02424;--danger-light:#fdf2f2;
+  --warn:#c27803;--warn-light:#fdf6b2;
+  --text:#111827;--muted:#6b7280;--subtle:#9ca3af;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+  --radius:16px;--shadow:0 1px 3px rgba(0,0,0,0.1),0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:0 4px 6px -1px rgba(0,0,0,0.1),0 2px 4px -1px rgba(0,0,0,0.06);
+  --shadow-lg:0 10px 15px -3px rgba(0,0,0,0.1),0 4px 6px -2px rgba(0,0,0,0.05);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  background:var(--bg);
+  font-family:var(--font);
+  min-height:100vh;
+  color:var(--text);
+}
+
+/* TOP BAR */
+.topbar{
+  background:var(--primary);
+  padding:16px 20px 20px;
+  position:relative;
+  overflow:hidden;
+}
+.topbar::before{
+  content:'';position:absolute;top:-40px;right:-40px;
+  width:140px;height:140px;border-radius:50%;
+  background:rgba(255,255,255,0.06);
+}
+.topbar::after{
+  content:'';position:absolute;bottom:-60px;right:20px;
+  width:180px;height:180px;border-radius:50%;
+  background:rgba(255,255,255,0.04);
+}
+.topbar-inner{position:relative;z-index:1;}
+.nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.logo{display:flex;align-items:center;gap:8px;text-decoration:none;}
+.logo-icon{
+  width:36px;height:36px;border-radius:10px;
+  background:rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+}
+.logo-text{font-size:1.1rem;font-weight:700;color:#fff;letter-spacing:-0.3px;}
+.nav-links{display:flex;gap:4px;}
+.nav-link{
+  padding:6px 12px;border-radius:8px;
+  font-size:0.8rem;font-weight:500;color:rgba(255,255,255,0.7);
+  text-decoration:none;transition:all 0.2s;
+}
+.nav-link:hover,.nav-link.active{
+  background:rgba(255,255,255,0.15);color:#fff;
+}
+.hero-text{color:#fff;}
+.hero-text h1{font-size:1.5rem;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px;}
+.hero-text p{font-size:0.85rem;color:rgba(255,255,255,0.7);}
+.status-pill{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,0.15);
+  border:1px solid rgba(255,255,255,0.2);
+  border-radius:20px;padding:4px 12px;
+  font-size:0.75rem;color:rgba(255,255,255,0.9);
+  margin-top:10px;
+}
+.dot{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:blink 2s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+/* MAIN */
+.main{padding:20px;max-width:480px;margin:0 auto;}
+
+/* SERVER CONFIG */
+.server-row{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:12px 16px;
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:16px;
+}
+.server-row input{
+  flex:1;border:none;outline:none;
+  font-family:var(--mono);font-size:0.78rem;color:var(--text);
+  background:transparent;
+}
+#conn-dot{width:8px;height:8px;border-radius:50%;background:#d1d5db;flex-shrink:0;}
+#conn-dot.online{background:#22c55e;}
+#conn-dot.offline{background:#ef4444;}
+.test-btn{
+  padding:4px 10px;border-radius:6px;border:1px solid var(--border2);
+  background:none;cursor:pointer;font-size:0.75rem;font-weight:500;color:var(--muted);
+}
+
+/* CARDS */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);margin-bottom:16px;
+}
+.card-title{
+  font-size:1rem;font-weight:700;margin-bottom:16px;
+  display:flex;align-items:center;gap:8px;
+}
+
+/* FORM */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-size:0.75rem;font-weight:600;
+  color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.5px;
+}
+.field input{
+  width:100%;padding:11px 14px;
+  background:var(--bg);border:1.5px solid var(--border);
+  border-radius:10px;color:var(--text);
+  font-family:var(--font);font-size:0.9rem;
+  outline:none;transition:border-color 0.2s;
+}
+.field input:focus{border-color:var(--primary);}
+
+/* BUTTONS */
+.btn{
+  width:100%;padding:13px;border-radius:12px;border:none;
+  cursor:pointer;font-family:var(--font);font-weight:700;
+  font-size:0.95rem;transition:all 0.2s;display:flex;
+  align-items:center;justify-content:center;gap:8px;
+}
+.btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 12px rgba(26,86,219,0.3);}
+.btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);box-shadow:0 6px 16px rgba(26,86,219,0.4);}
+.btn-outline{background:none;color:var(--text);border:1.5px solid var(--border2);}
+.btn-outline:hover{border-color:var(--primary);color:var(--primary);}
+.btn-sm{width:auto;padding:8px 16px;font-size:0.85rem;border-radius:8px;}
+.btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+
+/* USER HEADER */
+.user-card{
+  background:linear-gradient(135deg,var(--primary) 0%,#1344b0 100%);
+  border-radius:var(--radius);padding:20px;
+  color:#fff;margin-bottom:16px;
+  position:relative;overflow:hidden;
+}
+.user-card::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:120px;height:120px;border-radius:50%;
+  background:rgba(255,255,255,0.08);
+}
+.user-card-row{display:flex;align-items:center;gap:12px;position:relative;z-index:1;}
+.user-avatar{
+  width:52px;height:52px;border-radius:12px;
+  background:rgba(255,255,255,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;overflow:hidden;
+}
+.user-avatar img{width:100%;height:100%;object-fit:cover;}
+.user-name{font-size:1.1rem;font-weight:700;letter-spacing:-0.3px;}
+.user-id{font-size:0.8rem;font-family:var(--mono);color:rgba(255,255,255,0.7);margin-top:2px;}
+.badge-row{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap;position:relative;z-index:1;}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:6px;
+  font-size:0.72rem;font-weight:700;
+  font-family:var(--mono);letter-spacing:0.3px;
+}
+.chip-green{background:rgba(74,222,128,0.2);color:#4ade80;border:1px solid rgba(74,222,128,0.3);}
+.chip-red{background:rgba(248,113,113,0.2);color:#f87171;border:1px solid rgba(248,113,113,0.3);}
+.chip-blue{background:rgba(147,197,253,0.2);color:#93c5fd;border:1px solid rgba(147,197,253,0.3);}
+.chip-muted{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.15);}
+
+/* QR TYPE SELECTOR */
+.qr-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.qr-type-btn{
+  padding:14px 10px;border-radius:12px;
+  border:2px solid var(--border);background:var(--bg);
+  cursor:pointer;text-align:center;transition:all 0.2s;
+}
+.qr-type-btn:hover{border-color:var(--border2);}
+.qr-type-btn.selected-entry{border-color:var(--success);background:var(--success-light);}
+.qr-type-btn.selected-exit{border-color:var(--danger);background:var(--danger-light);}
+.qr-type-btn:disabled{opacity:0.4;cursor:not-allowed;}
+.qr-type-icon{font-size:1.5rem;margin-bottom:4px;}
+.qr-type-label{font-size:0.85rem;font-weight:700;color:var(--text);}
+.qr-type-sub{font-size:0.72rem;color:var(--muted);margin-top:2px;}
+
+/* QR DISPLAY */
+.qr-section{text-align:center;}
+.timer-wrap{position:relative;width:68px;height:68px;margin:0 auto 14px;}
+.timer-wrap svg{transform:rotate(-90deg);}
+.timer-wrap circle{fill:none;stroke-width:5;}
+.timer-bg{stroke:#e2e8f0;}
+.timer-prog{stroke:#1a56db;stroke-linecap:round;transition:stroke-dashoffset 1s linear,stroke 0.5s;}
+.timer-val{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--mono);font-weight:700;font-size:1.1rem;color:var(--primary);
+}
+#qr-box{
+  background:#fff;border-radius:12px;padding:12px;
+  width:164px;height:164px;margin:0 auto 12px;
+  border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;box-shadow:var(--shadow-md);
+}
+#qr-box.expired::after{
+  content:'EXPIRED';
+  position:absolute;inset:0;background:rgba(224,36,36,0.9);
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-family:var(--mono);font-size:1rem;
+  border-radius:12px;
+}
+.qr-info{
+  background:var(--bg);border-radius:10px;padding:10px 14px;
+  text-align:left;margin-top:10px;
+}
+.qr-info-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;}
+.qr-info-row:last-child{margin-bottom:0;}
+.qr-info-label{font-size:0.72rem;color:var(--muted);font-weight:600;text-transform:uppercase;}
+.qr-info-val{font-size:0.78rem;font-family:var(--mono);color:var(--text);word-break:break-all;}
+
+/* COPY BTN */
+.copy-btn{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:100%;padding:11px;border-radius:10px;
+  background:var(--primary-light);border:1.5px solid rgba(26,86,219,0.2);
+  color:var(--primary);font-weight:700;font-size:0.85rem;
+  cursor:pointer;transition:all 0.2s;margin-top:10px;
+  font-family:var(--font);
+}
+.copy-btn:hover{background:var(--primary);color:#fff;}
+
+/* ALERTS */
+.alert{
+  padding:11px 14px;border-radius:10px;
+  font-size:0.85rem;margin-bottom:12px;border:1px solid;
+}
+.alert-success{background:var(--success-light);border-color:rgba(15,155,88,0.2);color:var(--success);}
+.alert-danger{background:var(--danger-light);border-color:rgba(224,36,36,0.2);color:var(--danger);}
+.alert-warn{background:var(--warn-light);border-color:rgba(194,120,3,0.2);color:var(--warn);}
+.alert-info{background:var(--primary-light);border-color:rgba(26,86,219,0.15);color:var(--primary);}
+
+/* USAGE GRID */
+.usage-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.usage-tile{
+  background:var(--bg);border:1px solid var(--border);
+  border-radius:12px;padding:14px;text-align:center;
+}
+.usage-num{font-size:1.6rem;font-weight:700;font-family:var(--mono);color:var(--primary);}
+.usage-label{font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+
+/* HIDDEN */
+.hidden{display:none!important;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="nav-row">
+      <div class="logo">
+        <div class="logo-icon">🔐</div>
+        <span class="logo-text">ChainGate</span>
+      </div>
+      <div class="nav-links">
+        <a href="chaingate-gate.html" class="nav-link">🚪 Gate</a>
+        <a href="chaingate-admin.html" class="nav-link">🛡️ Admin</a>
+        <a href="chaingate-chain.html" class="nav-link">⛓️ Chain</a>
+      </div>
+    </div>
+    <div class="hero-text">
+      <h1>Student Access</h1>
+      <p>Generate your secure QR pass to enter college</p>
+    </div>
+    <div class="status-pill">
+      <div class="dot"></div>
+      <span id="status-text">Checking server...</span>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- Server Config -->
+  <div class="server-row">
+    <div id="conn-dot"></div>
+    <span style="font-size:0.75rem;color:var(--muted);white-space:nowrap;">Server:</span>
+    <input id="server-url" value="http://localhost:3000" placeholder="http://localhost:3000">
+    <button class="test-btn" onclick="pingServer()">Test</button>
+  </div>
+
+  <!-- LOGIN CARD -->
+  <div id="login-card" class="card">
+    <div class="card-title">🎓 Student Login</div>
+
+    <div class="field">
+      <label>College Roll Number</label>
+      <input id="roll-no" placeholder="Enter ur Reg NO " value="">
+    </div>
+    <div class="field">
+      <label>Full Name</label>
+      <input id="student-name" placeholder="Enter Your name" value="">
+    </div>
+    <div class="field">
+      <label>Department</label>
+      <input id="department" placeholder="Enter Department" value="">
+    </div>
+
+    <button class="btn btn-primary" onclick="loginStudent()">
+      Login & Get Access →
+    </button>
+  </div>
+
+  <!-- QR PANEL (after login) -->
+  <div id="qr-panel" class="hidden">
+
+    <!-- User Info -->
+    <div class="user-card">
+      <div class="user-card-row">
+        <div class="user-avatar" id="user-avatar-wrap">
+          <span id="user-avatar-icon">👤</span>
+          <img id="user-avatar-img" src="" alt="" style="display:none;">
+        </div>
+        <div>
+          <div class="user-name" id="user-name-display"></div>
+          <div class="user-id" id="user-id-display"></div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="logoutStudent()" style="margin-left:auto;background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.2);color:#fff;width:auto;">Logout</button>
+      </div>
+      <div class="badge-row">
+        <div class="chip chip-blue" id="dept-chip"></div>
+        <div class="chip" id="entry-chip"></div>
+        <div class="chip" id="exit-chip"></div>
+      </div>
+    </div>
+
+    <!-- QR Type Select -->
+    <div class="card">
+      <div class="card-title">Generate QR Pass</div>
+
+      <div class="qr-type-grid">
+        <button class="qr-type-btn" id="btn-entry" onclick="generateQR('entry')">
+          <div class="qr-type-icon">🟢</div>
+          <div class="qr-type-label">Entry QR</div>
+          <div class="qr-type-sub">Enter college</div>
+        </button>
+        <button class="qr-type-btn" id="btn-exit" onclick="generateQR('exit')">
+          <div class="qr-type-icon">🔴</div>
+          <div class="qr-type-label">Exit QR</div>
+          <div class="qr-type-sub">Leave college</div>
+        </button>
+      </div>
+
+      <!-- QR Display -->
+      <div id="qr-display" class="qr-section hidden">
+        <div class="timer-wrap">
+          <svg width="68" height="68" viewBox="0 0 68 68">
+            <circle class="timer-bg" cx="34" cy="34" r="29"/>
+            <circle class="timer-prog" id="timer-prog" cx="34" cy="34" r="29"
+              stroke-dasharray="182" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-val" id="timer-val">15</div>
+        </div>
+
+        <div id="qr-box"><div style="color:var(--muted);font-size:0.8rem;">QR loading...</div></div>
+
+        <div id="qr-type-label" style="margin:8px 0;"></div>
+
+        <div class="qr-info">
+          <div class="qr-info-row">
+            <span class="qr-info-label">Student</span>
+            <span class="qr-info-val" id="qi-name"></span>
+          </div>
+          <div class="qr-info-row">
+            <span class="qr-info-label">Roll No</span>
+            <span class="qr-info-val" id="qi-roll"></span>
+          </div>
+          <div class="qr-info-row">
+            <span class="qr-info-label">Type</span>
+            <span class="qr-info-val" id="qi-type"></span>
+          </div>
+          <div class="qr-info-row">
+            <span class="qr-info-label">Expires</span>
+            <span class="qr-info-val" id="qi-expiry"></span>
+          </div>
+        </div>
+
+        <div id="qr-expired-alert" class="alert alert-danger hidden" style="margin-top:10px;">
+          ⛔ QR Expired — Daily limit reached. Contact admin for emergency pass.
+        </div>
+
+        <button class="copy-btn" onclick="copyToGate()" id="copy-btn">
+          📋 Send to Gate Terminal
+        </button>
+      </div>
+    </div>
+
+    <!-- Today's Usage -->
+    <div class="card">
+      <div class="card-title" style="margin-bottom:12px;">Today's Usage</div>
+      <div class="usage-grid">
+        <div class="usage-tile">
+          <div class="usage-num" id="u-entry">0/1</div>
+          <div class="usage-label">Entry QR</div>
+        </div>
+        <div class="usage-tile">
+          <div class="usage-num" id="u-exit">0/1</div>
+          <div class="usage-label">Exit QR</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end qr-panel -->
+</div>
+
+<script>
+const S={
+  student:null,
+  activeQR:null,
+  timer:null,
+  usage:{},
+};
+
+function getURL(){return document.getElementById('server-url').value.trim();}
+
+async function pingServer(){
+  const dot=document.getElementById('conn-dot');
+  const txt=document.getElementById('status-text');
+  try{
+    const r=await fetch(getURL()+'/health',{signal:AbortSignal.timeout(3000)});
+    const d=await r.json();
+    dot.className='online';txt.textContent='Server Online';
+  }catch(e){
+    dot.className='offline';txt.textContent='Server Offline — Local mode';
+  }
+}
+
+function today(){return new Date().toISOString().split('T')[0];}
+function now(){return Date.now();}
+
+async function loginStudent(){
+  const roll=document.getElementById('roll-no').value.trim();
+  const name=document.getElementById('student-name').value.trim();
+  const dept=document.getElementById('department').value.trim();
+  if(!roll||!name){alert('Please fill Roll Number and Name');return;}
+
+  let backendOnline=false;
+  
+  // Try to verify with backend first
+  try{
+    const res = await fetch(getURL()+'/mobile/login',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({studentId:roll,name,department:dept}),
+      signal:AbortSignal.timeout(3000)
+    });
+
+    const data = await res.json();
+
+    if(!data.success){
+      alert(data.message);
+      return;
+    }
+    backendOnline=true;
+  }catch(e){
+    // Backend offline - check if student is already registered locally
+    const storedStudents=JSON.parse(localStorage.getItem('cg_students')||'[]');
+    const existingStudent=storedStudents.find(s=>s.rollNo===roll);
+    if(!existingStudent){
+      alert('Cannot verify - student not found in system. Contact admin to register.');
+      return;
+    }
+    alert('⚠️ Backend offline - using local verification');
+  }
+
+  S.student={rollNo:roll,name,department:dept};
+  if(!S.usage[roll]||S.usage[roll].date!==today()){
+    S.usage[roll]={entry:false,exit:false,date:today()};
+  }
+
+  // Update UI
+  document.getElementById('login-card').classList.add('hidden');
+  document.getElementById('qr-panel').classList.remove('hidden');
+  document.getElementById('user-name-display').textContent=name;
+  document.getElementById('user-id-display').textContent=roll+' · '+dept;
+  document.getElementById('dept-chip').textContent='🎓 '+dept;
+
+  updateUsageUI();
+
+  // Save to localStorage for gate to read
+  localStorage.setItem('cg_student',JSON.stringify(S.student));
+}
+
+function logoutStudent(){
+  clearTimer();S.student=null;S.activeQR=null;
+  document.getElementById('login-card').classList.remove('hidden');
+  document.getElementById('qr-panel').classList.add('hidden');
+  document.getElementById('qr-display').classList.add('hidden');
+}
+
+function updateUsageUI(){
+  const u=S.usage[S.student?.rollNo];
+  if(!u)return;
+  document.getElementById('u-entry').textContent=(u.entry?1:0)+'/1';
+  document.getElementById('u-exit').textContent=(u.exit?1:0)+'/1';
+  document.getElementById('btn-entry').disabled=u.entry;
+  document.getElementById('btn-exit').disabled=u.exit;
+
+  const ec=document.getElementById('entry-chip');
+  const xc=document.getElementById('exit-chip');
+  ec.textContent=u.entry?'Entry ✓':'Entry —';
+  ec.className='chip '+(u.entry?'chip-green':'chip-muted');
+  xc.textContent=u.exit?'Exit ✓':'Exit —';
+  xc.className='chip '+(u.exit?'chip-red':'chip-muted');
+}
+
+async function generateQR(type){
+  const st=S.student;if(!st)return;
+  // Removed local usage check - allow unlimited QR codes
+
+  clearTimer();
+  let qrData;
+
+  try{
+    const res=await fetch(getURL()+'/mobile/generate-qr',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({studentId:st.rollNo,name:st.name,department:st.department,type}),
+      signal:AbortSignal.timeout(4000)
+    });
+    const d=await res.json();
+    if(d.success){qrData=d.qr;}
+    else{alert('Backend error: '+d.message);return;}
+  }catch(e){
+    // Local fallback
+    const token=genToken();
+    qrData={studentId:st.rollNo,name:st.name,department:st.department,type,token,expiry:now()+15000,used:false};
+  }
+
+  S.activeQR={...qrData};
+  S.usage[st.rollNo][type]=true;
+  updateUsageUI();
+
+  renderQR(qrData);
+  startTimer(15);
+
+  // Persist for gate page (no photo — gate reads from admin registration)
+  localStorage.setItem('cg_activeQR',JSON.stringify(qrData));
+}
+
+function renderQR(d){
+  const sec=document.getElementById('qr-display');
+  sec.classList.remove('hidden');
+  const box=document.getElementById('qr-box');
+  box.innerHTML='';box.classList.remove('expired');
+
+  const payload={token:d.token,type:d.type,studentId:d.studentId,name:d.name,expiry:d.expiry};
+  new QRCode(box,{text:JSON.stringify(payload),width:140,height:140,colorDark:'#000',colorLight:'#fff',correctLevel:QRCode.CorrectLevel.H});
+
+  const isEntry=d.type==='entry';
+  document.getElementById('qr-type-label').innerHTML=
+    `<span style="display:inline-flex;align-items:center;gap:6px;padding:4px 14px;border-radius:8px;font-size:0.8rem;font-weight:700;font-family:var(--mono);background:${isEntry?'var(--success-light)':'var(--danger-light)'};color:${isEntry?'var(--success)':'var(--danger)'};">
+      ${isEntry?'🟢 ENTRY PASS':'🔴 EXIT PASS'}
+    </span>`;
+  document.getElementById('qi-name').textContent=d.name;
+  document.getElementById('qi-roll').textContent=d.studentId;
+  document.getElementById('qi-type').textContent=(d.type||'').toUpperCase();
+  document.getElementById('qi-expiry').textContent='15 seconds';
+  document.getElementById('qr-expired-alert').classList.add('hidden');
+  document.getElementById('copy-btn').style.display='flex';
+}
+
+function startTimer(secs){
+  let rem=secs;
+  const prog=document.getElementById('timer-prog');
+  const val=document.getElementById('timer-val');
+  const circ=2*Math.PI*29;
+
+  function tick(){
+    const pct=rem/15;
+    prog.style.strokeDashoffset=circ*(1-pct);
+    val.textContent=rem;
+    if(rem<=5){prog.style.stroke='#e02424';val.style.color='#e02424';}
+    else if(rem<=8){prog.style.stroke='#c27803';val.style.color='#c27803';}
+    else{prog.style.stroke='#1a56db';val.style.color='#1a56db';}
+    if(rem<=0){expireQR();return;}
+    rem--;S.timer=setTimeout(tick,1000);
+  }tick();
+}
+
+function expireQR(){
+  if(S.activeQR)S.activeQR.expired=true;
+  document.getElementById('qr-box').classList.add('expired');
+  document.getElementById('qr-expired-alert').classList.remove('hidden');
+  document.getElementById('copy-btn').style.display='none';
+  localStorage.removeItem('cg_activeQR');
+}
+
+function clearTimer(){if(S.timer)clearTimeout(S.timer);S.timer=null;}
+
+function copyToGate(){
+  if(!S.activeQR||S.activeQR.expired)return;
+  const payload={token:S.activeQR.token,type:S.activeQR.type,studentId:S.activeQR.studentId,name:S.activeQR.name,expiry:S.activeQR.expiry};
+  localStorage.setItem('cg_activeQR',JSON.stringify(payload));
+  // Open gate page
+  window.open('chaingate-gate.html','_blank');
+}
+
+function genToken(){return Array.from({length:32},()=>'abcdef0123456789'[Math.floor(Math.random()*16)]).join('');}
+
+// Init
+pingServer();
+</script>
+</body>
+</html>

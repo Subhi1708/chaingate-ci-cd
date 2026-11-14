@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChainGate — Gate Station</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#040608;--surface:#080c12;--card:#0e1520;
+  --border:#1a2535;--border2:#243040;
+  --accent:#00c9ff;--accent2:#00ff9d;
+  --danger:#ff3355;--warn:#fbbf24;
+  --text:#e4eef8;--muted:#4a6278;--subtle:#2a3a4a;
+  --font:'DM Sans',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;overflow-x:hidden;}
+
+/* SCAN LINES BG */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(0,201,255,0.02) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,201,255,0.02) 1px,transparent 1px);
+  background-size:32px 32px;pointer-events:none;z-index:0;
+}
+
+/* TOP BAR */
+.topbar{
+  height:56px;background:rgba(4,6,8,0.95);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 24px;
+  position:sticky;top:0;z-index:100;
+}
+.topbar-left{display:flex;align-items:center;gap:10px;}
+.logo-mark{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(0,201,255,0.15);border:1px solid rgba(0,201,255,0.2);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.topbar-title{font-size:0.95rem;font-weight:700;color:var(--text);}
+.topbar-sub{font-size:0.72rem;color:var(--muted);margin-left:8px;font-family:var(--mono);}
+.topbar-nav{margin-left:auto;display:flex;gap:4px;}
+.tnav{
+  padding:5px 12px;border-radius:6px;
+  font-size:0.8rem;font-weight:500;color:var(--muted);
+  text-decoration:none;transition:all 0.2s;
+}
+.tnav:hover,.tnav.active{color:var(--accent);background:rgba(0,201,255,0.08);}
+.server-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);margin-left:12px;}
+.server-dot.online{background:var(--accent2);}
+.server-dot.offline{background:var(--danger);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:0;height:calc(100vh - 56px);position:relative;z-index:1;}
+
+/* LEFT PANEL */
+.left-panel{
+  padding:24px;overflow-y:auto;
+  border-right:1px solid var(--border);
+}
+.right-panel{padding:24px;overflow-y:auto;}
+
+/* STEP INDICATOR */
+.step-bar{
+  display:flex;align-items:center;gap:0;
+  margin-bottom:20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+}
+.step-item{
+  flex:1;padding:10px 8px;text-align:center;
+  border-right:1px solid var(--border);
+  transition:all 0.3s;position:relative;
+}
+.step-item:last-child{border-right:none;}
+.step-n{font-family:var(--mono);font-size:0.6rem;color:var(--muted);display:block;}
+.step-l{font-size:0.75rem;font-weight:700;color:var(--muted);letter-spacing:0.3px;}
+.step-item.s-active{background:rgba(0,201,255,0.07);}
+.step-item.s-active .step-n,.step-item.s-active .step-l{color:var(--accent);}
+.step-item.s-done{background:rgba(0,255,157,0.05);}
+.step-item.s-done .step-l{color:var(--accent2);}
+.step-item.s-done::after{content:'✓';position:absolute;top:6px;right:6px;font-size:0.55rem;color:var(--accent2);}
+.step-item.s-locked{opacity:0.4;}
+
+/* SECTION CARD */
+.sec{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;margin-bottom:14px;
+  transition:all 0.3s;
+}
+.sec-head{
+  padding:12px 16px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.sec-num{
+  width:24px;height:24px;border-radius:50%;
+  background:var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:0.65rem;font-weight:700;
+  color:var(--muted);flex-shrink:0;transition:all 0.3s;
+}
+.sec.s-active .sec-num{background:rgba(0,201,255,0.15);color:var(--accent);box-shadow:0 0 10px rgba(0,201,255,0.15);}
+.sec.s-done .sec-num{background:rgba(0,255,157,0.15);color:var(--accent2);}
+.sec-title{font-size:0.9rem;font-weight:700;color:var(--muted);letter-spacing:0.3px;}
+.sec.s-active .sec-title{color:var(--accent);}
+.sec.s-done .sec-title{color:var(--accent2);}
+.sec-badge{margin-left:auto;}
+.sec-body{padding:14px;background:var(--card);}
+.sec.s-locked .sec-body{opacity:0.4;pointer-events:none;}
+
+/* INPUTS */
+.input{
+  width:100%;padding:9px 12px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);
+  font-family:var(--mono);font-size:0.8rem;outline:none;
+  transition:border-color 0.2s;
+}
+.input:focus{border-color:var(--accent);}
+.label{
+  display:block;font-size:0.7rem;font-weight:600;
+  color:var(--muted);margin-bottom:4px;
+  text-transform:uppercase;letter-spacing:0.8px;
+}
+
+/* BUTTONS */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:6px;
+  padding:9px 16px;border-radius:8px;border:none;cursor:pointer;
+  font-family:var(--font);font-weight:700;font-size:0.85rem;
+  transition:all 0.2s;letter-spacing:0.3px;
+}
+.btn-accent{background:var(--accent);color:#000;box-shadow:0 0 12px rgba(0,201,255,0.2);}
+.btn-accent:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(0,201,255,0.35);}
+.btn-success{background:var(--accent2);color:#000;}
+.btn-success:hover{transform:translateY(-1px);}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-outline{background:transparent;color:var(--text);border:1px solid var(--border2);}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent);}
+.btn-w{width:100%;}
+.btn:disabled{opacity:0.35;cursor:not-allowed;transform:none!important;}
+
+/* ALERTS */
+.alrt{
+  padding:9px 12px;border-radius:8px;font-size:0.82rem;
+  margin-bottom:10px;border:1px solid;
+}
+.alrt-ok{background:rgba(0,255,157,0.08);border-color:rgba(0,255,157,0.2);color:var(--accent2);}
+.alrt-err{background:rgba(255,51,85,0.08);border-color:rgba(255,51,85,0.2);color:var(--danger);}
+.alrt-warn{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.2);color:var(--warn);}
+.alrt-info{background:rgba(0,201,255,0.08);border-color:rgba(0,201,255,0.2);color:var(--accent);}
+
+/* FACE CAM */
+.cam-wrap{
+  position:relative;border-radius:10px;overflow:hidden;
+  border:2px solid var(--border);background:#000;
+  aspect-ratio:4/3;
+}
+.cam-wrap video{width:100%;height:100%;object-fit:cover;display:block;}
+.cam-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;color:var(--muted);gap:6px;
+}
+.cam-overlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.face-ring{
+  width:100px;height:100px;border-radius:50%;
+  border:2px solid var(--accent);
+  box-shadow:0 0 20px rgba(0,201,255,0.25);
+  animation:pring 2s ease-in-out infinite;
+  display:none;
+}
+.face-ring.active{display:block;}
+.scan-beam{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent),transparent);
+  animation:beam 2s ease-in-out infinite;display:none;
+}
+.scan-beam.active{display:block;}
+.cam-status{
+  position:absolute;bottom:0;left:0;right:0;
+  background:rgba(0,0,0,0.8);padding:7px 10px;
+  font-family:var(--mono);font-size:0.68rem;
+  color:var(--muted);text-align:center;
+}
+@keyframes pring{0%,100%{transform:scale(1);opacity:1;}50%{transform:scale(1.08);opacity:0.7;}}
+@keyframes beam{0%{top:15%;}50%{top:85%;}100%{top:15%;}}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+@keyframes spin{to{transform:rotate(360deg);}}
+.spin{animation:spin 0.8s linear infinite;display:inline-block;}
+@keyframes slideup{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.slide-up{animation:slideup 0.3s ease;}
+
+/* GATE VISUAL */
+.gate-wrap{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;margin-bottom:14px;
+}
+.gate-display{
+  height:190px;display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+  transition:all 0.5s;
+}
+.gate-display.gate-open{
+  background:linear-gradient(135deg,rgba(0,255,157,0.05) 0%,rgba(0,255,157,0.02) 100%);
+  border-bottom:2px solid var(--accent2);
+  box-shadow:inset 0 0 60px rgba(0,255,157,0.05);
+}
+.gate-display.gate-closed{border-bottom:2px solid var(--border);}
+.gate-display.gate-denied{
+  animation:shake 0.4s ease;
+  border-bottom:2px solid var(--danger)!important;
+  box-shadow:inset 0 0 40px rgba(255,51,85,0.08);
+}
+.bars{display:flex;gap:7px;align-items:flex-end;height:100px;}
+.bar{
+  width:14px;border-radius:4px 4px 0 0;
+  background:var(--border2);
+  transition:all 0.6s cubic-bezier(0.34,1.56,0.64,1);
+}
+.gate-open .bar{transform:translateY(-80px);background:var(--accent2);box-shadow:0 0 8px rgba(0,255,157,0.4);}
+.gate-beam{
+  position:absolute;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--accent2),transparent);
+  animation:beam 2s ease-in-out infinite;display:none;
+}
+.gate-open .gate-beam{display:block;}
+.gate-lbl{
+  position:absolute;bottom:10px;
+  font-family:var(--mono);font-size:0.65rem;font-weight:700;
+  letter-spacing:3px;text-transform:uppercase;color:var(--muted);
+  transition:color 0.3s;
+}
+.gate-open .gate-lbl{color:var(--accent2);}
+.gate-info{
+  padding:12px 14px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.gate-student{font-size:0.85rem;font-weight:600;}
+.gate-session-time{font-family:var(--mono);font-size:0.7rem;color:var(--muted);}
+
+/* ACCESS LOG */
+.log-wrap{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden;
+}
+.log-head{
+  padding:10px 14px;background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.log-title{font-size:0.85rem;font-weight:700;}
+.log-body{max-height:340px;overflow-y:auto;padding:8px;}
+.log-item{
+  padding:8px 10px;border-radius:6px;
+  border:1px solid var(--border);background:var(--surface);
+  margin-bottom:5px;
+  animation:slideup 0.3s ease;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+}
+.log-msg{font-family:var(--mono);font-size:0.7rem;}
+.log-time{font-family:var(--mono);font-size:0.65rem;color:var(--muted);flex-shrink:0;}
+.log-ok{color:var(--accent2);}
+.log-err{color:var(--danger);}
+.log-warn{color:var(--warn);}
+.log-info{color:var(--accent);}
+
+/* CHIP */
+.chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:2px 8px;border-radius:4px;
+  font-family:var(--mono);font-size:0.65rem;font-weight:700;
+  letter-spacing:0.3px;text-transform:uppercase;
+}
+.chip-g{background:rgba(0,255,157,0.1);color:var(--accent2);border:1px solid rgba(0,255,157,0.2);}
+.chip-r{background:rgba(255,51,85,0.1);color:var(--danger);border:1px solid rgba(255,51,85,0.2);}
+.chip-b{background:rgba(0,201,255,0.1);color:var(--accent);border:1px solid rgba(0,201,255,0.2);}
+.chip-y{background:rgba(251,191,36,0.1);color:var(--warn);border:1px solid rgba(251,191,36,0.2);}
+
+/* CONTINUOUS VERIFY */
+.cont-bar{
+  background:rgba(0,255,157,0.06);border:1px solid rgba(0,255,157,0.15);
+  border-radius:8px;padding:9px 12px;margin-top:8px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+
+.hidden{display:none!important;}
+.flex{display:flex;align-items:center;gap:8px;}
+.mt1{margin-top:8px;}
+.mt2{margin-top:14px;}
+.gap1{gap:8px;}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo-mark">🚪</div>
+    <span class="topbar-title">ChainGate</span>
+    <span class="topbar-sub">GATE STATION</span>
+  </div>
+  <div class="topbar-nav">
+    <a href="mobile.html" class="tnav">📱 Mobile</a>
+    <a href="admin.html" class="tnav">🛡️ Admin</a>
+    <a href="chain.html" class="tnav">⛓️ Chain</a>
+  </div>
+  <div class="server-dot" id="sdot"></div>
+</div>
+
+<div class="layout">
+
+<!-- LEFT: VERIFICATION STEPS -->
+<div class="left-panel">
+
+  <!-- Step bar -->
+  <div class="step-bar">
+    <div class="step-item s-active" id="sp1"><span class="step-n">01</span><div class="step-l">QR SCAN</div></div>
+    <div class="step-item s-locked" id="sp2"><span class="step-n">02</span><div class="step-l">BACKEND</div></div>
+    <div class="step-item s-locked" id="sp3"><span class="step-n">03</span><div class="step-l">FACE VERIFY</div></div>
+    <div class="step-item s-locked" id="sp4"><span class="step-n">04</span><div class="step-l">GATE</div></div>
+  </div>
+
+  <!-- STEP 1: QR SCAN -->
+  <div class="sec s-active" id="sec1">
+    <div class="sec-head">
+      <div class="sec-num">1</div>
+      <div class="sec-title">Scan Student QR</div>
+      <div class="sec-badge" id="b1"></div>
+    </div>
+    <div class="sec-body">
+      <label class="label">Paste QR Token (camera scan simulation)</label>
+      <div class="flex mt1 gap1">
+        <input class="input" id="qr-input" placeholder="Paste QR JSON or click Auto-fill...">
+        <button class="btn btn-accent" onclick="scanQR()">Scan</button>
+      </div>
+      <button class="btn btn-outline btn-w mt1" onclick="autoFillFromMobile()" style="font-size:0.78rem;">
+        📋 Auto-fill from Mobile App
+      </button>
+      <div id="r1" class="mt1"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2: BACKEND VERIFY -->
+  <div class="sec s-locked" id="sec2">
+    <div class="sec-head">
+      <div class="sec-num">2</div>
+      <div class="sec-title">Backend Token Verify</div>
+      <div class="sec-badge" id="b2"></div>
+    </div>
+    <div class="sec-body">
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:8px;">Checking token against blockchain server — expiry, usage, and student ID validation.</p>
+      <div id="r2"></div>
+      <button class="btn btn-outline btn-w mt1 hidden" id="retry-btn" onclick="retryBackend()">↺ Retry</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: FACE VERIFICATION -->
+  <div class="sec s-locked" id="sec3">
+    <div class="sec-head">
+      <div class="sec-num">3</div>
+      <div class="sec-title">Face Verification</div>
+      <div class="sec-badge" id="b3"></div>
+    </div>
+    <div class="sec-body">
+      <!-- Reference photo preview -->
+      <div id="ref-photo-bar" class="hidden" style="margin-bottom:10px;">
+        <div class="alrt alrt-info" style="display:flex;align-items:center;gap:10px;padding:8px 12px;">
+          <img id="ref-photo-thumb" src="" style="width:40px;height:40px;border-radius:6px;object-fit:cover;" alt="ref">
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;">ID Card Reference Photo</div>
+            <div style="font-size:0.7rem;color:var(--muted);">Face will be matched against this</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cam-wrap mb1" id="cam-wrap">
+        <div class="cam-placeholder" id="cam-ph">
+          <span style="font-size:2rem;">📷</span>
+          <span style="font-size:0.8rem;">Complete QR scan first</span>
+        </div>
+        <video id="face-video" autoplay muted playsinline style="display:none;"></video>
+        <div class="cam-overlay">
+          <div class="face-ring" id="face-ring"></div>
+          <div class="scan-beam" id="scan-beam"></div>
+        </div>
+        <div class="cam-status" id="cam-status">Waiting...</div>
+      </div>
+      <div class="flex gap1 mt1">
+        <button class="btn btn-outline" id="btn-start-cam" onclick="startCamera()" disabled style="flex:1;">📷 Start Camera</button>
+        <button class="btn btn-success" id="btn-verify-face" onclick="verifyFace()" disabled style="flex:1;">✓ Verify Face</button>
+      </div>
+      <div id="r3" class="mt1"></div>
+
+      <div id="cont-panel" class="hidden mt1">
+        <div class="cont-bar">
+          <span style="font-size:0.8rem;color:var(--accent2);">🔄 Live face monitoring active</span>
+          <span class="chip chip-g" id="cont-count">0 checks</span>
+        </div>
+        <div id="cont-status" style="font-family:var(--mono);font-size:0.68rem;color:var(--muted);margin-top:4px;"></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end left-panel -->
+
+<!-- RIGHT: GATE + LOG -->
+<div class="right-panel">
+
+  <!-- Gate Display -->
+  <div class="gate-wrap">
+    <div class="gate-display gate-closed" id="gate-vis">
+      <div class="bars" id="bars"></div>
+      <div class="gate-beam"></div>
+      <div class="gate-lbl" id="gate-lbl">CLOSED</div>
+    </div>
+    <div class="gate-info">
+      <div>
+        <div class="gate-student" id="gate-student">No active session</div>
+        <div class="gate-session-time" id="gate-time"></div>
+      </div>
+      <div id="gate-chip"></div>
+    </div>
+    <div style="padding:0 14px 14px;">
+      <button class="btn btn-danger btn-w hidden" id="btn-close-gate" onclick="forceClose()">⛔ Force Close Gate</button>
+    </div>
+  </div>
+
+  <!-- Today Stats -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:1.5rem;font-weight:700;font-family:var(--mono);color:var(--accent2);" id="st-entries">0</div>
+      <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Entries</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:1.5rem;font-weight:700;font-family:var(--mono);color:var(--danger);" id="st-denied">0</div>
+      <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Denied</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+      <div style="font-size:1.5rem;font-weight:700;font-family:var(--mono);color:var(--warn);" id="st-active">0</div>
+      <div style="font-size:0.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;">Active</div>
+    </div>
+  </div>
+
+  <!-- Access Log -->
+  <div class="log-wrap">
+    <div class="log-head">
+      <span class="log-title">Access Log</span>
+      <button class="btn btn-outline" onclick="clearLog()" style="padding:4px 10px;font-size:0.72rem;">Clear</button>
+    </div>
+    <div class="log-body" id="access-log">
+      <div style="color:var(--muted);font-size:0.8rem;text-align:center;padding:2rem;">No events yet</div>
+    </div>
+  </div>
+
+</div><!-- end right-panel -->
+</div><!-- end layout -->
+
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.7.12/dist/face-api.min.js"></script>
+<script>
+const G={
+  step:1,
+  scannedPayload:null,
+  pendingSession:null,
+  stream:null,
+  gateOpen:false,
+  activeSession:null,
+  contTimer:null,
+  contCount:0,
+  entries:0,denied:0,
+  faceApiLoaded:false,
+};
+
+
+function now(){return Date.now();}
+function fmt(ts){return new Date(ts).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
+function genTk(n=32){return Array.from({length:n},()=>'abcdef0123456789'[Math.floor(Math.random()*16)]).join('');}
+
+/* ── SERVER PING ── */
+async function ping(){
+  const dot=document.getElementById('sdot');
+  try{
+    await fetch('/health',{signal:AbortSignal.timeout(3000)});
+    dot.className='server-dot online';
+  }catch(e){dot.className='server-dot offline';}
+}
+
+/* ── STEP MANAGEMENT ── */
+function setStep(n){
+  G.step=n;
+  [1,2,3,4].forEach(i=>{
+    const sp=document.getElementById('sp'+i);
+    const sc=document.getElementById('sec'+i);
+    if(!sp||!sc)return;
+    sp.className='step-item '+(i<n?'s-done':i===n?'s-active':'s-locked');
+    sc.className='sec '+(i<n?'s-done':i===n?'s-active':'s-locked');
+  });
+}
+
+function badge(n,txt,cls){
+  const el=document.getElementById('b'+n);
+  if(el)el.innerHTML=txt?`<span class="chip chip-${cls}">${txt}</span>`:'';
+}
+
+/* ── LOG ── */
+function log(level,msg){
+  const wrap=document.getElementById('access-log');
+  const ph=wrap.querySelector('[style*="No events"]');
+  if(ph)wrap.innerHTML='';
+  const cl={ok:'log-ok',err:'log-err',warn:'log-warn',info:'log-info'};
+  const ic={ok:'✅',err:'❌',warn:'⚠️',info:'ℹ️'};
+  const d=document.createElement('div');
+  d.className='log-item';
+  d.innerHTML=`<span class="log-msg ${cl[level]||''}">${ic[level]||''} ${msg}</span><span class="log-time">${fmt(now())}</span>`;
+  wrap.prepend(d);
+  // broadcast to blockchain page
+  const chain=JSON.parse(localStorage.getItem('cg_chain_log')||'[]');
+  chain.unshift({type:level.toUpperCase(),msg,ts:now()});
+  if(chain.length>200)chain.pop();
+  localStorage.setItem('cg_chain_log',JSON.stringify(chain));
+}
+
+function clearLog(){document.getElementById('access-log').innerHTML='<div style="color:var(--muted);font-size:0.8rem;text-align:center;padding:2rem;">Cleared</div>';}
+
+/* ── STEP 1: QR SCAN ── */
+function autoFillFromMobile(){
+  const qrData=localStorage.getItem('cg_activeQR');
+  if(qrData){
+    try{
+      const d=JSON.parse(qrData);
+      const payload={token:d.token,type:d.type,studentId:d.studentId,name:d.name,expiry:d.expiry};
+      document.getElementById('qr-input').value=JSON.stringify(payload);
+      // Reference photo comes from admin registration, not from mobile QR
+    }catch(e){}
+  }else{
+    showR(1,'⚠️ No QR found from Mobile App — generate one first','warn');
+  }
+}
+
+function scanQR(){
+  const raw=document.getElementById('qr-input').value.trim();
+  if(!raw){showR(1,'⚠️ Paste a QR token','warn');return;}
+
+  let payload;
+  try{payload=JSON.parse(raw);}
+  catch(e){showR(1,'❌ Invalid QR format','err');return;}
+
+  if(!payload.token){showR(1,'❌ QR missing token','err');return;}
+  if(payload.expiry&&now()>payload.expiry){
+    showR(1,'⛔ QR already expired (15s window)','err');
+    badge(1,'EXPIRED','r');deny(payload.studentId||'?','QR Expired');return;
+  }
+
+  G.scannedPayload=payload;
+  showR(1,`✅ QR parsed — <strong>${payload.name}</strong> (${(payload.type||'').toUpperCase()}) — Proceeding to backend check...`,'ok');
+  badge(1,'SCANNED','g');
+  log('ok',`QR scanned — ${payload.name} (${payload.studentId})`);
+  setTimeout(()=>{setStep(2);doBackendVerify(payload.token,payload);},600);
+}
+
+/* ── STEP 2: BACKEND VERIFY ── */
+async function doBackendVerify(token,payload){
+  showR(2,`<span class="spin">⟳</span> Verifying with blockchain server...`,'info');
+  try{
+    const res=await fetch('/gate/verify-qr',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({token}),signal:AbortSignal.timeout(5000)
+    });
+    const d=await res.json();
+    if(d.success){
+      showR(2,'✅ Token verified — not expired, not reused','ok');
+      badge(2,'VERIFIED','g');
+      log('ok',`Backend verified token for ${payload.name}`);
+      setTimeout(()=>proceedToFace(d.user||payload),500);
+    }else{
+      showR(2,`❌ Backend rejected: ${d.message||'Verification failed'}`,'err');
+      badge(2,'REJECTED','r');
+      document.getElementById('retry-btn').classList.remove('hidden');
+      deny(payload.studentId,'Backend: '+(d.message||'fail'));
+    }
+  }catch(e){
+    // Local fallback
+    const local=localStorage.getItem('cg_activeQR');
+    let localQR=null;
+    try{localQR=JSON.parse(local);}catch(e2){}
+    if(localQR&&localQR.token===token&&!localQR.expired&&now()<localQR.expiry){
+      showR(2,'⚠️ Backend offline — local QR verified','warn');
+      badge(2,'LOCAL','y');
+      log('warn','Backend offline — local fallback passed');
+      setTimeout(()=>proceedToFace(payload),500);
+    }else{
+      showR(2,'❌ Backend offline & no valid local QR','err');
+      badge(2,'OFFLINE','r');
+      document.getElementById('retry-btn').classList.remove('hidden');
+    }
+  }
+}
+
+function retryBackend(){
+  document.getElementById('retry-btn').classList.add('hidden');
+  if(G.scannedPayload)doBackendVerify(G.scannedPayload.token,G.scannedPayload);
+}
+
+/* ── STEP 3: FACE VERIFICATION ── */
+async function proceedToFace(session){
+  G.pendingSession={...session};
+  setStep(3);
+  document.getElementById('cam-status').textContent='⟳ Fetching reference photo from server...';
+
+  const studentId=session.studentId||session.empId||'';
+  try{
+    const r=await fetch(`/gate/student/${encodeURIComponent(studentId)}`,{signal:AbortSignal.timeout(8000)});
+    if(!r.ok){
+      const errText=await r.text();
+      showR(3,`❌ Server error ${r.status} fetching student data: ${errText}`,'err');
+      badge(3,'SERVER ERR','r');
+      document.getElementById('cam-status').textContent=`❌ Server returned ${r.status}`;
+      log('err',`Server error ${r.status} for ${studentId}`);
+      // Still allow manual camera start so gate operator can make a judgment call
+      document.getElementById('btn-start-cam').disabled=false;
+      document.getElementById('btn-verify-face').disabled=true;
+      G.refPhoto=null;
+      return;
+    }
+    const d=await r.json();
+    if(!d.success){
+      showR(3,`❌ ${d.message||'Student lookup failed'}`,'err');
+      badge(3,'DENIED','r');
+      deny(studentId,d.message||'Student lookup failed');
+      document.getElementById('btn-start-cam').disabled=true;
+      document.getElementById('btn-verify-face').disabled=true;
+      document.getElementById('cam-status').textContent='❌ '+( d.message||'Student not found');
+      return;
+    }
+    if(!d.student?.photoData){
+      // Check localStorage for reference photo as fallback
+      const localPhoto = localStorage.getItem('cg_refphoto_' + studentId);
+      if(localPhoto){
+        G.refPhoto = localPhoto;
+        document.getElementById('ref-photo-thumb').src=G.refPhoto;
+        document.getElementById('ref-photo-bar').classList.remove('hidden');
+        document.getElementById('cam-status').textContent='✅ Photo loaded from local storage';
+      }else{
+        // No photo registered — warn but allow gate operator to proceed (demo / no-photo mode)
+        showR(3,`⚠️ No reference photo for <strong>${session.name}</strong>. Proceeding in demo mode — face check will auto-pass.`,'warn');
+        badge(3,'NO PHOTO','y');
+        G.refPhoto=null;
+        document.getElementById('cam-status').textContent='⚠️ No photo registered — demo mode';
+        log('warn',`No reference photo for ${studentId} — demo mode`);
+      }
+    } else {
+      // Save to localStorage for offline access
+      localStorage.setItem('cg_refphoto_' + studentId, d.student.photoData);
+      G.refPhoto=d.student.photoData;
+      document.getElementById('ref-photo-thumb').src=G.refPhoto;
+      document.getElementById('ref-photo-bar').classList.remove('hidden');
+    }
+  }catch(e){
+    // Network error — still allow gate operator to proceed in demo mode
+    showR(3,`⚠️ Could not reach server (${e.message}). Running in offline demo mode — face check will auto-pass.`,'warn');
+    badge(3,'OFFLINE','y');
+    G.refPhoto=null;
+    document.getElementById('cam-status').textContent='⚠️ Server offline — demo mode active';
+    log('warn','Server unreachable — offline demo mode');
+  }
+
+  document.getElementById('btn-start-cam').disabled=false;
+  document.getElementById('face-ring').classList.add('active');
+  document.getElementById('scan-beam').classList.add('active');
+  document.getElementById('cam-status').textContent='✅ QR verified — start camera for face check';
+  log('info',`Proceeding to face check for ${session.name}`);
+}
+
+async function startCamera(){
+  try{
+    G.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}});
+    const vid=document.getElementById('face-video');
+    vid.srcObject=G.stream;vid.style.display='block';
+    document.getElementById('cam-ph').style.display='none';
+    document.getElementById('cam-status').textContent='📷 Camera live — align face in circle and verify';
+    document.getElementById('btn-verify-face').disabled=false;
+    document.getElementById('btn-start-cam').disabled=true;
+  }catch(e){
+    G.stream=null;
+    document.getElementById('cam-status').textContent='❌ Camera access denied — face verification requires camera.';
+    showR(3,'❌ Camera permission denied. Allow camera access in your browser and click "Start Camera" again.','err');
+    document.getElementById('btn-start-cam').disabled=false;
+    document.getElementById('btn-verify-face').disabled=true;
+  }
+}
+
+async function verifyFace(){
+  const pend=G.pendingSession;
+  if(!pend){showR(3,'⚠️ No pending session','warn');return;}
+  if(!G.stream){
+    showR(3,'❌ Camera is required. Please allow camera access and click "Start Camera".','err');
+    document.getElementById('btn-start-cam').disabled=false;
+    return;
+  }
+  if(!G.refPhoto){
+    // Demo mode — no reference photo, auto-pass
+    log('warn','No reference photo — auto-passing in demo mode');
+    handleFaceResult(pend,true,88,'Demo mode — no reference photo','Demo');
+    return;
+  }
+
+  document.getElementById('btn-verify-face').disabled=true;
+  document.getElementById('cam-status').textContent='🔍 Running AI face comparison...';
+  showR(3,'<span class="spin">⟳</span> Analyzing face with Claude Vision AI...','info');
+
+  let livePhoto=null;
+  try{
+    const vid=document.getElementById('face-video');
+    const cv=document.createElement('canvas');
+    cv.width=vid.videoWidth||320;cv.height=vid.videoHeight||240;
+    cv.getContext('2d').drawImage(vid,0,0);
+    livePhoto=cv.toDataURL('image/jpeg',0.85);
+  }catch(e){
+    showR(3,'❌ Failed to capture camera frame. Please retry.','err');
+    document.getElementById('btn-verify-face').disabled=false;
+    return;
+  }
+
+  // Use browser-based face-api.js for face verification
+  showR(3,`⟳ Analyzing face with AI...`,'info');
+  
+  try {
+    await doBrowserFaceVerify(pend, livePhoto);
+  } catch (e) {
+    console.error('Face verify error:', e);
+    showR(3,'❌ Face verification failed. Access denied.','err');
+    deny(pend.studentId,'Face verify error: ' + e.message);
+    document.getElementById('btn-verify-face').disabled=false;
+  }
+}
+
+async function doBrowserFaceVerify(pend, livePhoto) {
+  const studentId = pend.studentId || pend.empId;
+  
+  // Get reference photo from localStorage
+  const refPhoto = localStorage.getItem('cg_refphoto_' + studentId);
+  
+  if (!refPhoto) {
+    // No reference photo - use demo mode
+    console.log('[FaceVerify] No reference photo, using demo mode');
+    handleFaceResult(pend, true, 88, 'Demo mode - no reference photo', 'Demo');
+    return;
+  }
+
+  // Initialize face-api if not loaded
+  if (!G.faceApiLoaded) {
+    showR(3,`⟳ Loading face detection models...`,'info');
+    const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    G.faceApiLoaded = true;
+    console.log('[FaceVerify] Models loaded');
+  }
+
+  // Create temporary img elements
+  const refImg = new Image();
+  const liveImg = new Image();
+  refImg.src = refPhoto;
+  liveImg.src = livePhoto;
+  
+  await new Promise((resolve, reject) => {
+    refImg.onload = resolve;
+    refImg.onerror = reject;
+    setTimeout(() => reject(new Error('Image load timeout')), 10000);
+  });
+
+  await new Promise((resolve, reject) => {
+    liveImg.onload = resolve;
+    liveImg.onerror = reject;
+    setTimeout(() => reject(new Error('Image load timeout')), 10000);
+  });
+
+  // Detect faces
+  const refDetections = await faceapi.detectAllFaces(refImg).withFaceLandmarks().withFaceDescriptors();
+  const liveDetections = await faceapi.detectAllFaces(liveImg).withFaceLandmarks().withFaceDescriptors();
+
+  if (refDetections.length === 0) {
+    handleFaceResult(pend, true, 85, 'No face in reference photo - auto approved', 'Demo');
+    return;
+  }
+
+  if (liveDetections.length === 0) {
+    showR(3,'❌ No face detected in camera. Ensure good lighting.','err');
+    deny(studentId, 'No face detected in live photo');
+    document.getElementById('btn-verify-face').disabled=false;
+    return;
+  }
+
+  // Compare faces using face descriptor distance
+  const refDescriptor = refDetections[0].descriptor;
+  const liveDescriptor = liveDetections[0].descriptor;
+  const distance = faceapi.euclideanDistance(refDescriptor, liveDescriptor);
+  
+  const matched = distance < 0.55;
+  const confidence = Math.round(Math.max(0, (1 - distance)) * 100);
+
+  console.log(`[FaceVerify] distance=${distance.toFixed(4)}, matched=${matched}, confidence=${confidence}%`);
+  
+  // Send result to server
+  await fetch('/mobile/face-verify',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      studentId: studentId,
+      matched: matched,
+      confidence: confidence,
+      method: 'Browser FaceAPI',
+    }),
+  });
+
+  handleFaceResult(pend, matched, confidence, matched ? 'Identity confirmed' : 'Face mismatch', 'Browser FaceAPI');
+}
+
+function handleFaceResult(pend,match,conf,reason,method){
+  // Log result to server
+  fetch('/gate/log-access',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({
+      studentId:pend.studentId||pend.empId,
+      name:pend.name,
+      department:pend.department,
+      type:pend.type,
+      matched:match,
+      confidence:conf,
+      reason,
+      checkType:'initial',
+    }),
+  }).catch(()=>{});
+
+  if(match){
+    document.getElementById('cam-status').textContent=`✅ Match confirmed (${conf}%)`;
+    showR(3,`✅ <strong>Identity verified</strong> — ${pend.name}<br><span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">${conf}% confidence · ${reason} · ${method}</span>`,'ok');
+    badge(3,'MATCHED','g');
+    log('ok',`Face matched: ${pend.name} (${conf}%)`);
+    setTimeout(()=>openGate(pend),600);
+  }else{
+    document.getElementById('cam-status').textContent=`❌ Face mismatch (${conf}%)`;
+    showR(3,`❌ <strong>Face does not match registered photo</strong><br><span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);">${conf}% confidence · ${reason}</span><br>Try again or contact Admin.`,'err');
+    badge(3,'MISMATCH','r');
+    document.getElementById('btn-verify-face').disabled=false;
+    deny(pend.studentId||pend.empId,'Face mismatch');
+  }
+}
+
+/* ── STEP 4: GATE OPEN ── */
+function openGate(session){
+  G.gateOpen=true;
+  G.activeSession={...session,openedAt:now()};
+  G.entries++;
+  document.getElementById('st-entries').textContent=G.entries;
+  document.getElementById('st-active').textContent=1;
+
+  const gv=document.getElementById('gate-vis');
+  gv.className='gate-display gate-open';
+  document.getElementById('gate-lbl').textContent='OPEN';
+  document.getElementById('gate-student').textContent=`${session.name} — ${(session.type||'').toUpperCase()} PASS`;
+  document.getElementById('gate-chip').innerHTML=
+    `<span class="chip ${session.type==='entry'?'chip-g':'chip-r'}">${session.type||'PASS'}</span>`;
+  document.getElementById('btn-close-gate').classList.remove('hidden');
+
+  setStep(4);
+  badge(4,'OPEN','g');
+  log('ok',`🚪 Gate OPENED — ${session.name} (${session.type})`);
+  startContinuous();
+}
+
+function startContinuous(){
+  document.getElementById('cont-panel').classList.remove('hidden');
+  async function check(){
+    if(!G.gateOpen)return;
+    G.contCount++;
+    document.getElementById('cont-count').textContent=G.contCount+' checks';
+    document.getElementById('cont-status').textContent=`${fmt(now())} — 🔍 Checking face...`;
+
+    if(!G.stream){
+      document.getElementById('cont-status').textContent=`${fmt(now())} — ❌ Camera lost — closing gate!`;
+      log('err','Continuous check: camera stream lost');
+      forceClose();return;
+    }
+
+    let livePhoto=null;
+    try{
+      const vid=document.getElementById('face-video');
+      const cv=document.createElement('canvas');
+      cv.width=vid.videoWidth||320;cv.height=vid.videoHeight||240;
+      cv.getContext('2d').drawImage(vid,0,0);
+      livePhoto=cv.toDataURL('image/jpeg',0.7);
+    }catch(e){
+      document.getElementById('cont-status').textContent=`${fmt(now())} — ❌ Camera capture failed — closing gate!`;
+      forceClose();return;
+    }
+
+    try{
+      const pend=G.activeSession;
+      const resp=await fetch('/mobile/face-verify',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          studentId:pend.studentId||pend.empId,
+          livePhotoB64:livePhoto,
+          checkType:'continuous',
+        }),
+      });
+      const data=await resp.json();
+      if(data.matched){
+        document.getElementById('cont-status').textContent=`${fmt(now())} — ✅ Face OK (${data.confidence}%)`;
+        if(G.gateOpen)G.contTimer=setTimeout(check,5000);
+      }else{
+        document.getElementById('cont-status').textContent=`${fmt(now())} — ❌ Face mismatch (${data.confidence}%) — closing gate!`;
+        log('err',`Continuous check failed: ${data.confidence}% — closing gate`);
+        // Log to server
+        fetch('/gate/log-access',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({studentId:pend.studentId,name:pend.name,department:pend.department,
+            type:pend.type,matched:false,confidence:data.confidence,reason:data.reason,checkType:'continuous'})
+        }).catch(()=>{});
+        forceClose();
+      }
+    }catch(e){
+      document.getElementById('cont-status').textContent=`${fmt(now())} — ❌ Verification error — closing gate!`;
+      log('err','Continuous check: network error — closing gate for security');
+      forceClose();
+    }
+  }
+  G.contTimer=setTimeout(check,5000);
+}
+
+function forceClose(){
+  clearTimeout(G.contTimer);
+  G.gateOpen=false;G.contCount=0;
+
+  const gv=document.getElementById('gate-vis');
+  gv.className='gate-display gate-denied';
+  setTimeout(()=>{gv.className='gate-display gate-closed';},600);
+  document.getElementById('gate-lbl').textContent='CLOSED';
+
+  if(G.activeSession){
+    const dur=Math.round((now()-G.activeSession.openedAt)/1000);
+    log('warn',`Gate CLOSED — ${G.activeSession.name} (${dur}s session)`);
+    G.activeSession=null;
+  }
+  document.getElementById('gate-student').textContent='No active session';
+  document.getElementById('gate-chip').innerHTML='';
+  document.getElementById('btn-close-gate').classList.add('hidden');
+  document.getElementById('cont-panel').classList.add('hidden');
+  document.getElementById('st-active').textContent=0;
+  badge(4,'CLOSED','r');
+
+  // Reset pipeline after 2s
+  setTimeout(resetPipeline,2000);
+}
+
+function resetPipeline(){
+  setStep(1);
+  G.scannedPayload=null;G.pendingSession=null;
+  ['r1','r2','r3'].forEach(id=>document.getElementById(id).innerHTML='');
+  document.getElementById('qr-input').value='';
+  document.getElementById('btn-start-cam').disabled=true;
+  document.getElementById('btn-verify-face').disabled=true;
+  document.getElementById('cam-status').textContent='Waiting...';
+  document.getElementById('face-ring').classList.remove('active');
+  document.getElementById('scan-beam').classList.remove('active');
+  document.getElementById('retry-btn').classList.add('hidden');
+  document.getElementById('ref-photo-bar').classList.add('hidden');
+  document.getElementById('cont-panel').classList.add('hidden');
+  ['b1','b2','b3','b4'].forEach(id=>badge(id.replace('b',''),'',null));
+  if(G.stream){
+    try{G.stream.getTracks().forEach(t=>t.stop());}catch(e){}
+    document.getElementById('face-video').srcObject=null;
+    document.getElementById('face-video').style.display='none';
+    document.getElementById('cam-ph').style.display='flex';
+  }
+  G.stream=null;
+  G.refPhoto=null;
+  log('info','Pipeline reset — ready');
+}
+
+function deny(id,reason){
+  G.denied++;
+  document.getElementById('st-denied').textContent=G.denied;
+  log('err',`DENIED — ${id}: ${reason}`);
+  const gv=document.getElementById('gate-vis');
+  gv.classList.add('gate-denied');
+  setTimeout(()=>gv.classList.remove('gate-denied'),600);
+  // Log denial to server blockchain
+  fetch('/gate/log-deny',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({studentId:id,reason,type:'ACCESS_DENIED'}),
+  }).catch(()=>{});
+}
+
+/* ── HELPERS ── */
+function showR(n,html,type){
+  const el=document.getElementById('r'+n);if(!el)return;
+  const cls={ok:'alrt-ok',err:'alrt-err',warn:'alrt-warn',info:'alrt-info'};
+  el.innerHTML=`<div class="alrt ${cls[type]||''}">${html}</div>`;
+}
+
+/* ── GATE BARS ── */
+(function buildBars(){
+  const el=document.getElementById('bars');
+  [55,75,95,75,55,75,95,75,55].forEach(h=>{
+    const b=document.createElement('div');
+    b.className='bar';b.style.height=h+'px';el.appendChild(b);
+  });
+})();
+
+// Init
+ping();
+</script>
+</body>
+</html>
