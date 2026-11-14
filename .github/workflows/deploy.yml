@@ -1,0 +1,23 @@
+name: Deploy
+on:
+  push:
+    branches: [main]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm test
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Trigger Render deploy
+        env:
+          HOOK: ${{ https://api.render.com/deploy/srv-dbs2l83rjlhs73d0d4tg?key=lVLf-OQvLkk }}
+        run: curl -fsS -X POST "$HOOK"
