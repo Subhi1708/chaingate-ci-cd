@@ -182,3 +182,5 @@ To access from other devices on the same network:
 ## License
 
 MIT License
+
+End of the project
